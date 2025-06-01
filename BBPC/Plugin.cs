@@ -4,7 +4,10 @@ using BepInEx.Logging;
 using HarmonyLib;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection.Emit;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -17,7 +20,7 @@ using UnityEngine.UI;
  */
 namespace BBPC
 {
-    [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, "0.0.0.2")]
+    [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, "0.0.0.3")]
     public class Plugin : BaseUnityPlugin
     {
         internal static new ManualLogSource Logger;
@@ -67,6 +70,7 @@ namespace BBPC
             harmony.PatchAll();
             watermarkGO = new Watermark(is_dev.Value, is_alpha.Value, is_beta.Value, this);
             Logger.LogInfo($"Mod {MyPluginInfo.PLUGIN_NAME} is loaded!");
+            //SceneManager.LoadScene("Credits");
         }
 
         private Canvas uiCanvas;
@@ -234,7 +238,7 @@ namespace BBPC
                         {
                             Destroy(texts[i].gameObject);
                         }
-                        mainText.text = "BB+汉化模组\n主要汉化人员:\nBaymaxawa & MEMZSystem32\n\n润色: 馒\n\nTMP字体: CMCGZP\n\n特别鸣谢: ChatGPT\n\n感谢所有在群内参与测试和提供的人员! 没有你们很难做到这里!";
+                        mainText.text = "<b>BB+汉化模组</b>\n\n主要汉化人员:\nBaymaxawa & MEMZSystem32\n\n润色: 馒\n\nTMP字体: CMCGZP\n\n特别鸣谢: ChatGPT\n\n<size=12>感谢所有在群内参与测试和提供的人员! 没有你们很难做到这里!</size>";
                         mainText.fontSize = 24;
                         mainText.alignment = TextAlignmentOptions.Center;
                         mainText.color = Color.white;
