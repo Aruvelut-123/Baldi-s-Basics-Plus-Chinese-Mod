@@ -64,15 +64,15 @@ namespace BBPC
             TextMeshProUGUI watermarkText = watermarkGO.AddComponent<TextMeshProUGUI>();
             if (is_dev)
             {
-                watermarkText.text = "RUNNING UNDER DEV BUILD\nDO NOT PUBLISH THIS!";
+                watermarkText.text = "正在使用开发版\n请勿发布此版本!";
             }
             else if (is_alpha)
             {
-                watermarkText.text = "RUNNING UNDER ALPHA BUILD\nMay have many bugs!";
+                watermarkText.text = "正在使用 Alpha 版\n可能会有翻译错误和 bug!";
             }
             else if (is_beta)
             {
-                watermarkText.text = "RUNNING UNDER BETA BUILD\nStill not stable until release!";
+                watermarkText.text = "正在使用 Beta 版\n还是会有些许翻译错误!";
             }
             else
             {
