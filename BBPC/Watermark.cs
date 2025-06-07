@@ -1,9 +1,6 @@
 ﻿using TMPro;
 using UnityEngine.UI;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using System.Collections;
-using System;
 
 namespace BBPC
 {

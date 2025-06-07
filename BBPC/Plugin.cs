@@ -3,20 +3,16 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection.Emit;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 /*
  * My codes are so bad that lots of them are using AI to make!
  * So if you see my codes please not laugh at me.
  * Because i'm still bad at coding with c#!
+ * And you you would like to help you can open Pull Requests
  */
 namespace BBPC
 {
