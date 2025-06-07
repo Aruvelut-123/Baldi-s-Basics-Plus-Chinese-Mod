@@ -42,8 +42,14 @@
     <Reference Include="mscorlib">
       <HintPath>..\mscorlib.dll</HintPath>
     </Reference>
+    <Reference Include="MTM101BaldAPI">
+      <HintPath>..\Dlls\MTM101BaldAPI.dll</HintPath>
+    </Reference>
     <Reference Include="netstandard">
       <HintPath>..\Dlls\netstandard.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\Dlls\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>..\Dlls\Unity.TextMeshPro.dll</HintPath>
