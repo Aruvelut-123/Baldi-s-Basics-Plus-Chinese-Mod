@@ -85,61 +85,66 @@ namespace BBPC
             harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
             harmony.PatchAll();
             watermarkGO = new Watermark(is_dev.Value, is_alpha.Value, is_beta.Value, this);
+            SceneManager.sceneLoaded += OnSceneLoaded;
             Logger.LogInfo($"Mod {MyPluginInfo.PLUGIN_NAME} is loaded!");
-            //SceneManager.LoadScene("Credits");
         }
 
-        private Canvas uiCanvas;
-
-        void FindUICanvas()
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            uiCanvas = GameObject.FindObjectOfType<Canvas>();
-            if (uiCanvas == null)
+            if (scene.name == "MainMenu") HandleMainMenuUI(scene);
+        }
+
+        private List<GameObject> GetAllGameObjects(Scene scene)
+        {
+            List<GameObject> allObjects = new List<GameObject>();
+            Stack<GameObject> stack = new Stack<GameObject>();
+
+            // 添加所有根对象到栈中
+            foreach (GameObject root in scene.GetRootGameObjects())
             {
-                Logger.LogError("Main canvas not found!");
-                return;
+                stack.Push(root);
             }
-        }
 
-        private bool IsValidMainMenuScene()
-        {
-            return SceneManager.GetActiveScene().name == "MainMenu"
-                   && uiCanvas != null
-                   && uiCanvas.gameObject.activeInHierarchy
-                   && uiCanvas.enabled;
-        }
-
-        private void Update()
-        {
-            if (uiCanvas == null) FindUICanvas();
-            try
+            while (stack.Count > 0)
             {
-                if (IsValidMainMenuScene())
+                GameObject current = stack.Pop();
+                allObjects.Add(current);
+
+                // 将所有子对象添加到栈中
+                for (int i = 0; i < current.transform.childCount; i++)
                 {
-                    HandleMainMenuUI();
+                    stack.Push(current.transform.GetChild(i).gameObject);
                 }
-                HandleCreditsScreen();
             }
-            catch (System.Exception e)
-            {
-                Logger.LogError($"Update loop error: {e}");
-            }
+
+            return allObjects;
         }
 
-        private void HandleMainMenuUI()
+        private void HandleMainMenuUI(Scene scene)
         {
-            if (SceneManager.GetActiveScene().name != "MainMenu") return;
-            if (uiCanvas == null)
-            {
-                FindUICanvas();
-                if (uiCanvas == null) return;
-            }
             try
             {
-                GameObject versionLabelGO = GameObject.Find("Reminder");
-                if (versionLabelGO == null) return;
-                UpdateVersionLabel();
-                CreateWatermark();
+                GameObject versionLabelGO = null;
+                List<GameObject> allObjects = GetAllGameObjects(scene);
+                Logger.LogWarning("Objects: "+allObjects.ToString());
+                List<GameObject> empty = [];
+                if (allObjects == null || allObjects == empty) { Logger.LogError("allObjects is empty!"); return; }
+                foreach (GameObject obj in allObjects)
+                {
+                    Logger.LogWarning("Object: " + obj.name);
+                    if (obj.name.Contains("Reminder"))
+                    {
+                        versionLabelGO = obj;
+                        Logger.LogInfo("Assigned versionLabelGO as " + obj.name);
+                        break;
+                    }
+                }
+                if (versionLabelGO == null) { Logger.LogError("error when finding reminder!"); return; }
+                UpdateVersionLabel(versionLabelGO);
+            }
+            catch (NullReferenceException e)
+            {
+                Logger.LogError(e.StackTrace);
             }
             catch (Exception e)
             {
@@ -147,20 +152,19 @@ namespace BBPC
             }
         }
 
-        private void UpdateVersionLabel()
+        private void UpdateVersionLabel(GameObject version_Label)
         {
+            Logger.LogWarning(version_Label);
             if (versionLabel == null)
             {
-                GameObject versionLabelGO = GameObject.Find("Reminder");
-                versionLabel = versionLabelGO?.GetComponent<TextMeshProUGUI>();
-                versionLabel.text += "\n汉化 " + version.Value;
+                versionLabel = version_Label.GetComponent<TextMeshProUGUI>();
             }
-
-            if (versionLabel != null)
-            {
-                UpdateBuildFlags();
-                UpdateWatermark();
-            }
+            Logger.LogWarning(versionLabel);
+            versionLabel.text += "\n汉化 " + version.Value;
+            Logger.LogWarning(versionLabel.text);
+            UpdateBuildFlags();
+            UpdateWatermark();
+            Logger.LogWarning(versionLabel.text);
         }
 
         private void UpdateBuildFlags()
@@ -187,12 +191,28 @@ namespace BBPC
         {
             if (watermark != null && watermarkGO != null)
             {
-                watermarkGO.update_watermark();
+                watermarkGO.update_watermark(is_dev.Value, is_alpha.Value, is_beta.Value);
             }
         }
 
-        private void HandleCreditsScreen()
+        private void Update()
         {
+            if (SceneManager.GetActiveScene().name == "MainMenu")
+            {
+                try
+                {
+                    GameObject menu = GameObject.Find("Menu");
+                    if (menu.activeSelf)
+                    {
+                        GameObject reminder = GameObject.Find("Reminder");
+                        if (!reminder.GetComponent<TextMeshProUGUI>().text.Contains("汉化")) { HandleMainMenuUI(SceneManager.GetActiveScene()); }
+                    }
+                }
+                catch (NullReferenceException)
+                {
+
+                }
+            }
             if (SceneManager.GetActiveScene().name != "Credits") return;
 
             GameObject extra = GameObject.Find("ExtraCreditsScreen(0)");
