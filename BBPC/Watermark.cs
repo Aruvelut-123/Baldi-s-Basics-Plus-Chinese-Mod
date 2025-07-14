@@ -9,6 +9,9 @@ namespace BBPC
         private GameObject watermarkGO;
         private Plugin plugin;
         public static GameObject canvas;
+        const string DEV_MARK = "正在使用开发版\n请勿发布此版本!";
+        const string ALPHA_MARK = "正在使用 Alpha 版\n可能会有翻译错误、机翻和些许 bug!";
+        const string BETA_MARK = "正在使用 Beta 版\n可能会有少量翻译错误和些许 bug!";
 
         public Watermark(bool is_dev, bool is_alpha, bool is_beta, Plugin plug)
         {
@@ -23,15 +26,19 @@ namespace BBPC
                 watermarkGO.SetActive(false);
                 if (is_dev)
                 {
-                    watermarkGO.GetComponent<TextMeshProUGUI>().text = "正在使用开发版\n请勿发布此版本!";
+                    watermarkGO.GetComponent<TextMeshProUGUI>().text = DEV_MARK;
                 }
                 else if (is_alpha)
                 {
-                    watermarkGO.GetComponent<TextMeshProUGUI>().text = "正在使用 Alpha 版\n可能会有翻译错误、机翻和些许 bug!";
+                    watermarkGO.GetComponent<TextMeshProUGUI>().text = ALPHA_MARK;
                 }
                 else if (is_beta)
                 {
-                    watermarkGO.GetComponent<TextMeshProUGUI>().text = "正在使用 Beta 版\n可能会有少量翻译错误和些许 bug!";
+                    watermarkGO.GetComponent<TextMeshProUGUI>().text = BETA_MARK;
+                }
+                else
+                {
+                    watermarkGO.GetComponent<TextMeshProUGUI>().text = "";
                 }
                 watermarkGO.SetActive(true);
             }
@@ -68,15 +75,15 @@ namespace BBPC
                 TextMeshProUGUI watermarkText = watermarkGO.AddComponent<TextMeshProUGUI>();
                 if (is_dev)
                 {
-                    watermarkText.text = "正在使用开发版\n请勿发布此版本!";
+                    watermarkGO.GetComponent<TextMeshProUGUI>().text = DEV_MARK;
                 }
                 else if (is_alpha)
                 {
-                    watermarkText.text = "正在使用 Alpha 版\n可能会有翻译错误和 bug!";
+                    watermarkGO.GetComponent<TextMeshProUGUI>().text = ALPHA_MARK;
                 }
                 else if (is_beta)
                 {
-                    watermarkText.text = "正在使用 Beta 版\n还是会有些许翻译错误!";
+                    watermarkGO.GetComponent<TextMeshProUGUI>().text = BETA_MARK;
                 }
                 else
                 {
