@@ -1,314 +1,367 @@
-﻿using BepInEx;
-using BepInEx.Configuration;
-using BepInEx.Logging;
+﻿using BBPC.API;
+using BepInEx;
 using HarmonyLib;
-using MTM101BaldAPI;
 using MTM101BaldAPI.AssetTools;
+using MTM101BaldAPI.ErrorHandler;
+using MTM101BaldAPI.OptionsAPI;
+using MTM101BaldAPI.Registers;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection.Emit;
+using System.Text;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
-/*
- * My codes are so bad that lots of them are using AI to make!
- * So if you see my codes please not laugh at me.
- * Because i'm still bad at coding with c#!
- * And you you would like to help you can open Pull Requests
- */
 namespace BBPC
 {
-    [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", BepInDependency.DependencyFlags.HardDependency)]
+    [Serializable]
+    public class PosterTextTable
+    {
+        public List<PosterTextData> items = new List<PosterTextData>();
+    }
 
-    [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, "0.0.0.4")]
+    [BepInPlugin(BBPCTemp.ModGUID, BBPCTemp.ModName, BBPCTemp.ModVersion)]
+    [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInProcess("BALDI.exe")]
     public class Plugin : BaseUnityPlugin
     {
-        static string _modPath = string.Empty;
-        public static string ModPath => _modPath;
-        internal static new ManualLogSource Logger;
-        private Harmony harmony;
-        private ConfigFile config;
-        private TextMeshProUGUI versionLabel;
-        private Watermark watermarkGO;
-        private GameObject watermark;
-        public static ConfigEntry<bool> disable_credits;
-        private ConfigEntry<bool> is_dev;
-        private ConfigEntry<bool> is_beta;
-        private ConfigEntry<bool> is_alpha;
-        private ConfigEntry<string> version;
-        private Credit credit_handler;
+        public static Plugin Instance { get; private set; } = null!;
+        private Harmony? harmonyInstance = null!;
+        private const string expectedGameVersion = "0.11";
+
+        private static readonly string[] menuTextureNames =
+        {
+            "About_Lit", "About_Unlit",
+            "Options_Lit", "Options_Unlit",
+            "Play_Lit", "Play_Unlit",
+            "TempMenu_Low"
+        };
+        private TextMeshProUGUI versionLabel { get; set; } = null!;
+        private Watermark watermarkGO { get; set; } = null!;
+        private GameObject watermark { get; set; } = null!;
 
         private void Awake()
         {
-            _modPath = AssetLoader.GetModPath(this);
-            config = new ConfigFile(
-                Path.Combine(Paths.ConfigPath, MyPluginInfo.PLUGIN_GUID+".cfg"),
-                true
-            );
-            disable_credits = config.Bind(
-                "Debugging",
-                "disable_credits",
-                false,
-                "Disable Credits 'Press any key will go back' Function"
-            );
-            is_dev = config.Bind(
-                "Build Check",
-                "is_dev",
-                false,
-                "Check if is dev build."
-            );
-            is_beta = config.Bind(
-                "Build Check",
-                "is_beta",
-                false,
-                "Check if is beta build."
-            );
-            is_alpha = config.Bind(
-                "Build Check",
-                "is_alpha",
-                false,
-                "Check if is alpha build."
-            );
-            version = config.Bind(
-                "Version Number",
-                "version",
-                "Dev Build",
-                "Version number that displays in game."
-            );
-            config.Save();
-            Logger = base.Logger;
-            credit_handler = new Credit(this);
-            harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
-            harmony.PatchAll();
-            watermarkGO = new Watermark(is_dev.Value, is_alpha.Value, is_beta.Value, this);
-            SceneManager.sceneLoaded += OnSceneLoaded;
-            Logger.LogInfo($"Mod {MyPluginInfo.PLUGIN_NAME} is loaded!");
-        }
+            Instance = this;
+            API.Logger.Init(Logger);
+            ConfigManager.Initialize(this, Logger);
 
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            if (scene.name == "MainMenu") HandleMainMenuUI(scene);
-        }
+            watermarkGO = new Watermark(ConfigManager.is_dev.Value, ConfigManager.is_alpha.Value, ConfigManager.is_beta.Value, this);
 
-        private List<GameObject> GetAllGameObjects(Scene scene)
-        {
-            List<GameObject> allObjects = new List<GameObject>();
-            Stack<GameObject> stack = new Stack<GameObject>();
+            API.Logger.Info($"插件 {BBPCTemp.ModName} 已初始化。");
+            API.Logger.Info($"纹理: {(ConfigManager.AreTexturesEnabled() ? "启用" : "禁用")}, " +
+                           $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}");
 
-            // 添加所有根对象到栈中
-            foreach (GameObject root in scene.GetRootGameObjects())
+            harmonyInstance = new Harmony(BBPCTemp.ModGUID);
+            FileLog.Reset();
+            harmonyInstance.PatchAll();
+
+            ConfigManager.is_alpha.Value = false;
+            ConfigManager.is_beta.Value = false;
+            ConfigManager.is_dev.Value = false;
+            if (ConfigManager.version.Value.Contains("Dev")) ConfigManager.is_dev.Value = true;
+            else if (ConfigManager.version.Value.Contains("Beta")) ConfigManager.is_beta.Value = true;
+            else if (ConfigManager.version.Value.Contains("Alpha")) ConfigManager.is_alpha.Value = true;
+
+            VersionCheck.CheckGameVersion(expectedGameVersion, Info);
+
+            string modPath = AssetLoader.GetModPath(this);
+            string langPath = Path.Combine(modPath, "Language", ConfigManager.currect_lang.Value);
+            if (Directory.Exists(langPath))
             {
-                stack.Push(root);
+                API.Logger.Info($"检测到本地化文件夹: {langPath}");
+                AssetLoader.LoadLocalizationFolder(langPath, Language.English);
             }
 
-            while (stack.Count > 0)
-            {
-                GameObject current = stack.Pop();
-                allObjects.Add(current);
+            LoadingEvents.RegisterOnAssetsLoaded(Info, OnAssetsLoaded(), false);
 
-                // 将所有子对象添加到栈中
-                for (int i = 0; i < current.transform.childCount; i++)
-                {
-                    stack.Push(current.transform.GetChild(i).gameObject);
-                }
-            }
+            gameObject.AddComponent<MenuTextureManager>();
 
-            return allObjects;
+            CustomOptionsCore.OnMenuInitialize += OnMenu;
+
+            API.Logger.Info($"Mod {MyPluginInfo.PLUGIN_NAME} is loaded!");
         }
 
-        private void HandleMainMenuUI(Scene scene)
+        private static string JSON_SeleteNode(JToken json, string ReName)
         {
             try
             {
-                GameObject versionLabelGO = null;
-                List<GameObject> allObjects = GetAllGameObjects(scene);
-                Logger.LogWarning("Objects: "+allObjects.ToString());
-                List<GameObject> empty = [];
-                if (allObjects == null || allObjects == empty) { Logger.LogError("allObjects is empty!"); return; }
-                foreach (GameObject obj in allObjects)
+                string result = "";
+                //这里6.0版块可以用正则匹配
+                var node = json.SelectToken("$.." + ReName);
+                if (node != null)
                 {
-                    Logger.LogWarning("Object: " + obj.name);
-                    if (obj.name.Contains("Reminder"))
+                    //判断节点类型
+                    if (node.Type == JTokenType.String || node.Type == JTokenType.Integer || node.Type == JTokenType.Float)
                     {
-                        versionLabelGO = obj;
-                        Logger.LogInfo("Assigned versionLabelGO as " + obj.name);
+                        //返回string值
+                        result = node.Value<object>().ToString();
+                    }
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return "";
+            }
+        }
+
+        private void OnMenu(OptionsMenu menu, CustomOptionsHandler handler)
+        {
+            BBPCOptionsCategory category = handler.AddCategory<BBPCOptionsCategory>(GetTranslationKey("BBPC_Options_Title", "BBPC"));
+            TextLocalizer localizer = category.gameObject.AddComponent<TextLocalizer>();
+            localizer.key = "BBPC_Options_Title";
+            localizer.RefreshLocalization();
+        }
+
+        public string GetTranslationKey(string key, string default_obj, string lang="SChinese", bool custom_lang=false)
+        {
+            if (lang != ConfigManager.currect_lang.Value && !custom_lang) lang = ConfigManager.currect_lang.Value;
+            string mod_path = AssetLoader.GetModPath(this);
+            string langPath = Path.Combine(mod_path, "Language", lang);
+            if (mod_path != null && mod_path != "")
+            {
+                if (Directory.Exists(langPath))
+                {
+                    string[] json_files = Directory.GetFiles(langPath, "*.json", SearchOption.AllDirectories);
+                    API.Logger.Debug(json_files.ToString());
+                    foreach (string json_file_path in json_files)
+                    {
+                        if (!json_file_path.Contains(lang)) continue;
+                        API.Logger.Debug(json_file_path);
+                        StreamReader file = File.OpenText(json_file_path);
+                        JsonTextReader reader = new JsonTextReader(file);
+                        JToken lang_json = (JObject)JToken.ReadFrom(reader);
+                        foreach (JToken item in lang_json["items"])
+                        {
+                            if (item["key"].ToString() == key)
+                            {
+                                return item["value"].ToString();
+                            }
+                        }
+                        file.Close();
                         break;
                     }
                 }
-                if (versionLabelGO == null) { Logger.LogError("error when finding reminder!"); return; }
-                UpdateVersionLabel(versionLabelGO);
             }
-            catch (NullReferenceException e)
-            {
-                Logger.LogError(e.StackTrace);
-            }
-            catch (Exception e)
-            {
-                Logger.LogError($"UI creation failed: {e}");
-            }
+            return default_obj;
         }
 
-        private void UpdateVersionLabel(GameObject version_Label)
+        public static T LoadAsset<T>(string name) where T : UnityEngine.Object
         {
-            Logger.LogWarning(version_Label);
-            if (versionLabel == null)
+            return (from x in Resources.FindObjectsOfTypeAll<T>()
+                    where x.name.ToLower() == name.ToLower()
+                    select x).First();
+        }
+
+        public static StandardMenuButton CreateButtonWithSprite(string name, Sprite sprite, Sprite spriteOnHightlight = null, Transform parent = null, Vector3? positon = null)
+        {
+            GameObject gameObject = new GameObject(name);
+            gameObject.layer = 5;
+            gameObject.tag = "Button";
+            StandardMenuButton res = gameObject.AddComponent<StandardMenuButton>();
+            res.image = gameObject.AddComponent<Image>();
+            res.image.sprite = sprite;
+            res.unhighlightedSprite = sprite;
+            res.OnPress = new UnityEvent();
+            res.OnRelease = new UnityEvent();
+            if (spriteOnHightlight != null)
             {
-                versionLabel = version_Label.GetComponent<TextMeshProUGUI>();
+                res.OnHighlight = new UnityEvent();
+                res.swapOnHigh = true;
+                res.highlightedSprite = spriteOnHightlight;
             }
-            Logger.LogWarning(versionLabel);
-            versionLabel.text += "\n汉化 " + version.Value;
-            Logger.LogWarning(versionLabel.text);
-            UpdateBuildFlags();
-            UpdateWatermark();
-            Logger.LogWarning(versionLabel.text);
+            res.transform.SetParent(parent);
+            res.transform.localPosition = positon ?? new Vector3(0, 0, 0);
+            return res;
         }
 
-        private void UpdateBuildFlags()
+        private IEnumerator OnAssetsLoaded()
         {
-            is_dev.Value = version.Value.Contains("Dev Build");
-            is_beta.Value = version.Value.Contains("Beta");
-            is_alpha.Value = version.Value.Contains("Alpha");
-            config.Save();
-        }
+            yield return 3;
 
-        private void CreateWatermark()
-        {
-            if (watermark == null && watermarkGO != null)
+            yield return "正在加载资源...";
+            API.Logger.Info("正在加载本地化资源...");
+
+            string modPath = AssetLoader.GetModPath(this);
+
+            if (ConfigManager.currect_lang.Value != "English")
             {
-                watermark = watermarkGO.create_watermark(
-                    is_dev.Value,
-                    is_alpha.Value,
-                    is_beta.Value
-                );
+                yield return "加载纹理中...";
+                ApplyAllTextures();
+
+                yield return "更新海报中...";
+                UpdatePosters(modPath);
             }
+
+            API.Logger.Info("资源加载完成！");
         }
 
-        private void UpdateWatermark()
+        public static void update_watermark()
         {
-            if (watermark != null && watermarkGO != null)
-            {
-                watermarkGO.update_watermark(is_dev.Value, is_alpha.Value, is_beta.Value);
-            }
+            API.Logger.Debug("Try to update watermark");
+            Plugin.Instance.watermarkGO.update_watermark(ConfigManager.is_dev.Value, ConfigManager.is_alpha.Value, ConfigManager.is_beta.Value);
         }
 
-        private void Update()
+        public void ApplyMenuTextures()
         {
-            if (SceneManager.GetActiveScene().name == "MainMenu")
+            if (!ConfigManager.AreTexturesEnabled()) return;
+
+            string modPath = AssetLoader.GetModPath(this);
+            string texturesPath = Path.Combine(modPath, "Textures");
+
+            if (Directory.Exists(texturesPath))
             {
-                try
+                API.Logger.Info("正在应用主菜单纹理...");
+                Texture2D[] allGameTextures = Resources.FindObjectsOfTypeAll<Texture2D>();
+                foreach (string textureName in menuTextureNames)
                 {
-                    GameObject menu = GameObject.Find("Menu");
-                    if (menu.activeSelf)
+                    Texture2D originalTexture = allGameTextures.FirstOrDefault(t => t.name == textureName);
+                    if (originalTexture != null)
                     {
-                        GameObject reminder = GameObject.Find("Reminder");
-                        if (!reminder.GetComponent<TextMeshProUGUI>().text.Contains("汉化")) { HandleMainMenuUI(SceneManager.GetActiveScene()); }
+                        string textureFile = Path.Combine(texturesPath, textureName + ".png");
+                        if (File.Exists(textureFile))
+                        {
+                            try
+                            {
+                                Texture2D newTexture = AssetLoader.TextureFromFile(textureFile);
+                                if (newTexture != null)
+                                {
+                                    if (originalTexture.width != newTexture.width || originalTexture.height != newTexture.height)
+                                    {
+                                        API.Logger.Warning($"纹理 '{textureName}' 尺寸 ({newTexture.width}x{newTexture.height}) 与原始尺寸 ({originalTexture.width}x{originalTexture.height}) 不匹配。已跳过替换。");
+                                        continue;
+                                    }
+
+                                    newTexture = AssetLoader.AttemptConvertTo(newTexture, originalTexture.format);
+                                    AssetLoader.ReplaceTexture(originalTexture, newTexture);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                API.Logger.Error($"替换纹理 '{textureName}' 时出错: {e.Message}");
+                            }
+                        }
                     }
                 }
-                catch (NullReferenceException)
-                {
+            }
+        }
 
+        public void ApplyAllTextures()
+        {
+            if (!ConfigManager.AreTexturesEnabled()) return;
+
+            string modPath = AssetLoader.GetModPath(this);
+            string texturesPath = Path.Combine(modPath, "Textures", ConfigManager.currect_lang.Value);
+
+            if (Directory.Exists(texturesPath))
+            {
+                API.Logger.Info($"检测到纹理文件夹: {texturesPath}, 正在替换...");
+
+                Texture2D[] allGameTextures = Resources.FindObjectsOfTypeAll<Texture2D>();
+                string[] textureFiles = Directory.GetFiles(texturesPath, "*.png", SearchOption.AllDirectories);
+
+                foreach (string textureFile in textureFiles)
+                {
+                    string textureName = Path.GetFileNameWithoutExtension(textureFile);
+                    Texture2D originalTexture = allGameTextures.FirstOrDefault(t => t.name == textureName);
+
+                    if (originalTexture != null)
+                    {
+                        try
+                        {
+                            Texture2D newTexture = AssetLoader.TextureFromFile(textureFile);
+                            if (newTexture != null)
+                            {
+                                if (originalTexture.width != newTexture.width || originalTexture.height != newTexture.height)
+                                {
+                                    API.Logger.Warning($"纹理 '{textureName}' 尺寸 ({newTexture.width}x{newTexture.height}) 与原始尺寸 ({originalTexture.width}x{originalTexture.height}) 不匹配。已跳过替换。");
+                                    continue;
+                                }
+
+                                newTexture = AssetLoader.AttemptConvertTo(newTexture, originalTexture.format);
+                                AssetLoader.ReplaceTexture(originalTexture, newTexture);
+                                API.Logger.Info($"纹理 '{textureName}' 已替换。");
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            API.Logger.Error($"替换纹理 '{textureName}' 时出错: {e.Message}");
+                        }
+                    }
+                    else
+                    {
+                        API.Logger.Warning($"未找到对应的纹理文件: {textureName}");
+                    }
                 }
             }
-            if (SceneManager.GetActiveScene().name != "Credits") return;
+        }
 
-            GameObject extra = GameObject.Find("ExtraCreditsScreen(0)");
-            GameObject allBackers = GameObject.Find("All Backers");
-
-            if (extra != null && allBackers != null)
+        private void UpdatePosters(string modPath)
+        {
+            string postersPath = Path.Combine(modPath, "PosterFiles", ConfigManager.currect_lang.Value);
+            if (!Directory.Exists(postersPath))
             {
-                // Simplify the nested if statements
-                bool shouldDisable = extra.activeSelf && allBackers.activeSelf;
-                allBackers.SetActive(!shouldDisable);
+                API.Logger.Warning("未找到海报文件夹，跳过替换。");
+                return;
+            }
+
+            API.Logger.Info("开始更新海报内容...");
+            PosterObject[] allPosters = Resources.FindObjectsOfTypeAll<PosterObject>();
+            foreach (PosterObject poster in allPosters)
+            {
+                string posterDataPath = Path.Combine(postersPath, poster.name, "PosterData.json");
+                if (File.Exists(posterDataPath))
+                {
+                    try
+                    {
+                        PosterTextTable? posterData = JsonUtility.FromJson<PosterTextTable>(File.ReadAllText(posterDataPath));
+
+                        if (posterData != null)
+                        {
+                            for (int i = 0; i < Math.Min(posterData.items.Count, poster.textData.Length); i++)
+                            {
+                                var sourceData = poster.textData[i];
+                                var modifiedData = posterData.items[i];
+
+                                sourceData.textKey = modifiedData.textKey;
+                                sourceData.position = modifiedData.position;
+                                sourceData.size = modifiedData.size;
+                                sourceData.fontSize = modifiedData.fontSize;
+                                sourceData.color = modifiedData.color;
+                            }
+
+                            API.Logger.Info($"海报内容已更新: {poster.name}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        API.Logger.Error($"更新海报 {poster.name} 时出错: {ex.Message}");
+                    }
+                }
+            }
+            API.Logger.Info("海报更新完成。");
+        }
+
+        void OnDestroy()
+        {
+            if (harmonyInstance != null)
+            {
+                harmonyInstance.UnpatchSelf();
+                harmonyInstance = null;
             }
         }
 
         public void des(GameObject obj)
         {
             Destroy(obj);
-        }
-
-        public void LogWarn (object msg)
-        {
-            Logger.LogWarning(msg);
-        }
-
-        [HarmonyPatch(typeof(Credits), "Start")]
-        public class Credits_Start_Patch
-        {
-            static void Postfix(Credits __instance)
-            {
-                if (__instance.screens != null && __instance.screens.Count > 0)
-                {
-                    JObject json = Credit.credit_json;
-                    int i = 0;
-                    int c = 1;
-                    GameObject originalScreen = __instance.screens[0].gameObject;
-                    foreach (JObject page in json["pages"])
-                    {
-                        GameObject clonedScreen = Instantiate(originalScreen, originalScreen.transform.parent);
-                        clonedScreen.name = "ExtraCreditsScreen(" + i.ToString() + ")";
-                        clonedScreen.SetActive(false);
-                        TMP_Text[] texts = clonedScreen.GetComponentsInChildren<TMP_Text>();
-                        if (texts != null && texts.Length > 0)
-                        {
-                            TMP_Text mainText = texts[0];
-                            Destroy(texts[1]);
-                            string text_screen = "";
-                            string sponser = "";
-                            foreach (string text in Credit.sponsers)
-                            {
-                                sponser += text + "\n";
-                            }
-                            foreach (JToken text in page["text"])
-                            {
-                                if (text.ToString().Contains("{AFDIAN_SPONSERS}"))
-                                {
-                                    string text2 = sponser;
-                                    text_screen += text2 + "\n";
-                                }
-                                else
-                                {
-                                    text_screen += text.ToString() + "\n";
-                                }
-                            }
-                            mainText.text = text_screen;
-                            mainText.fontSize = 24;
-                            mainText.alignment = TextAlignmentOptions.Center;
-                            mainText.color = Color.white;
-                        } 
-                        __instance.screens.Insert(c, clonedScreen.GetComponent<Canvas>());
-                        i++;
-                        c++;
-                    }
-                }
-            }
-        }
-
-        [HarmonyPatch(typeof(Credits), "Update")]
-        public class Credits_Update_DisableReturnPatch
-        {
-            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-            {
-                var codes = new List<CodeInstruction>(instructions);
-                if (Plugin.disable_credits.Value)
-                {
-                    for (int i = 0; i < codes.Count; i++)
-                    {
-                        if (codes[i].opcode == OpCodes.Ldstr && (string)codes[i].operand == "MainMenu")
-                        {
-                            Logger.LogDebug("Found MainMenu load instruction; replacing with NOPs.");
-                            codes[i].opcode = OpCodes.Nop;
-                            if (i + 1 < codes.Count) codes[i + 1].opcode = OpCodes.Nop;
-                            if (i + 2 < codes.Count) codes[i + 2].opcode = OpCodes.Nop;
-                        }
-                    }
-                }
-                return codes.AsEnumerable();
-            }
         }
     }
 }

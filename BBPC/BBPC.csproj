@@ -13,6 +13,20 @@
       https://nuget.samboy.dev/v3/index.json
     </RestoreAdditionalProjectSources>
     <RootNamespace>BBPC</RootNamespace>
+    <Nullable>enable</Nullable>
+    <BaseOutputPath>Build\</BaseOutputPath>
+    <Authors>Baymaxawa</Authors>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>False</Optimize>
+    <IsPublishable>False</IsPublishable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <IsPublishable>False</IsPublishable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +36,7 @@
     </PackageReference>
     <PackageReference Include="BepInEx.Core" Version="5.4.21" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.3.1" />
     <PackageReference Include="UnityEngine.Modules" Version="2020.3.38" IncludeAssets="compile" />
   </ItemGroup>
   
@@ -51,6 +66,9 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\Dlls\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="System.Net.Http">
+      <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6\System.Net.Http.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>..\Dlls\Unity.TextMeshPro.dll</HintPath>
     </Reference>
@@ -61,4 +79,5 @@
       <HintPath>..\Dlls\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
+
 </Project>
