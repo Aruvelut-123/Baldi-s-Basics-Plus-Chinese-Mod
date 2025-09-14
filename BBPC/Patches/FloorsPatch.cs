@@ -34,7 +34,8 @@ namespace BBPC.Patches
             
             { "StealthyChallenge", "BBPC_Floor_StealthyChallenge" },
             { "GrappleChallenge", "BBPC_Floor_GrappleChallenge" },
-            { "SpeedyChallenge", "BBPC_Floor_SpeedyChallenge" }
+            { "SpeedyChallenge", "BBPC_Floor_SpeedyChallenge" },
+            { "EventTest", "BBPC_Floor_EventTest" }
         };
 
         [HarmonyPatch(typeof(ElevatorScreen), "UpdateFloorDisplay")]

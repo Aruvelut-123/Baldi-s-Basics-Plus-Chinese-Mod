@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "BBPC": {
+      "commandName": "Project",
+      "commandLineArgs": "BALDI.EXE",
+      "workingDirectory": "E:\\SteamLibrary\\steamapps\\common\\Baldi's Basics Plus"
+    }
+  }
+}

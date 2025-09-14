@@ -2,7 +2,6 @@
 using BepInEx;
 using HarmonyLib;
 using MTM101BaldAPI.AssetTools;
-using MTM101BaldAPI.ErrorHandler;
 using MTM101BaldAPI.OptionsAPI;
 using MTM101BaldAPI.Registers;
 using Newtonsoft.Json;
@@ -12,11 +11,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace BBPC
@@ -34,7 +30,7 @@ namespace BBPC
     {
         public static Plugin Instance { get; private set; } = null!;
         private Harmony? harmonyInstance = null!;
-        private const string expectedGameVersion = "0.11";
+        private const string expectedGameVersion = "0.12";
 
         private static readonly string[] menuTextureNames =
         {
@@ -43,9 +39,7 @@ namespace BBPC
             "Play_Lit", "Play_Unlit",
             "TempMenu_Low"
         };
-        private TextMeshProUGUI versionLabel { get; set; } = null!;
         private Watermark watermarkGO { get; set; } = null!;
-        private GameObject watermark { get; set; } = null!;
 
         private void Awake()
         {
@@ -80,7 +74,7 @@ namespace BBPC
                 AssetLoader.LoadLocalizationFolder(langPath, Language.English);
             }
 
-            LoadingEvents.RegisterOnAssetsLoaded(Info, OnAssetsLoaded(), false);
+            LoadingEvents.RegisterOnAssetsLoaded(Info, OnAssetsLoaded(), LoadingEventOrder.Post);
 
             gameObject.AddComponent<MenuTextureManager>();
 

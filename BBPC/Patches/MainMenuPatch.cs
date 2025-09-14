@@ -1,9 +1,13 @@
 using BBPC.API;
 using HarmonyLib;
 using MTM101BaldAPI.UI;
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace BBPC.Patches
@@ -48,7 +52,8 @@ namespace BBPC.Patches
             { "StartTest", "BBPC_Menu_TestMapText" },     
             { "StartTest_1", "BBPC_Menu_TestMapText_1" },
             { "Reminder", "BBPC_Menu_Reminder" },
-            { "ModInfo", "BBPC_Menu_ModInfo" }
+            { "ModInfo", "BBPC_Menu_ModInfo" },
+            { "ModAbout", "BBPC_Menu_ModAbout" }
         };
         
         private static readonly List<SocialMediaInfo> SocialMediaLinks = new List<SocialMediaInfo>()
@@ -161,6 +166,7 @@ namespace BBPC.Patches
                 
                 localizer.key = "BBPC_Menu_ModInfo";
                 localizer.RefreshLocalization();
+                localizer.replaces.Add(BBPCTemp.ModVersion);
 
                 StandardMenuButton button = textComponent.gameObject.ConvertToButton<StandardMenuButton>(true);
                 button.underlineOnHigh = true;
@@ -196,13 +202,46 @@ namespace BBPC.Patches
             for (int i = 0; i < SocialMediaLinks.Count; i++)
             {
                 SocialMediaInfo info = SocialMediaLinks[i];
-                CreateSocialButton(panel, info.ButtonName, info.Url, i);
+                if (info.Url == "") CreateText(panel, info.ButtonName, i);
+                else CreateSocialButton(panel, info.ButtonName, info.Url, i);
             }
 
             panel.SetActive(false);
             socialLinksPanel = panel;
         }
-        
+
+        private static void CreateText(GameObject parent, string buttonName, int index)
+        {
+            GameObject buttonObj = new GameObject(buttonName, typeof(RectTransform), typeof(TextMeshProUGUI));
+            buttonObj.transform.SetParent(parent.transform, false);
+
+            RectTransform buttonRect = buttonObj.GetComponent<RectTransform>();
+            buttonRect.anchorMin = new Vector2(0, 1);
+            buttonRect.anchorMax = new Vector2(1, 1);
+            buttonRect.pivot = new Vector2(0.5f, 1);
+            buttonRect.anchoredPosition = new Vector3(0, -10 - (index * 35), 0);
+            buttonRect.sizeDelta = new Vector2(0, 30);
+
+            TextMeshProUGUI textComponent = buttonObj.GetComponent<TextMeshProUGUI>();
+            textComponent.fontSize = 16;
+            textComponent.alignment = TextAlignmentOptions.Center;
+            textComponent.raycastTarget = true;
+
+            TextLocalizer localizer = buttonObj.AddComponent<TextLocalizer>();
+
+            string? localizationKey = SocialMediaLinks.Find(x => x.ButtonName == buttonName)?.LocalizationKey;
+            if (string.IsNullOrEmpty(localizationKey))
+            {
+                localizationKey = buttonName;
+            }
+
+            localizer.key = localizationKey;
+            localizer.RefreshLocalization();
+
+            StandardMenuButton button = buttonObj.ConvertToButton<StandardMenuButton>(true);
+            button.underlineOnHigh = true;
+        }
+
         private static void CreateSocialButton(GameObject parent, string buttonName, string url, int index)
         {
             GameObject buttonObj = new GameObject(buttonName, typeof(RectTransform), typeof(TextMeshProUGUI));

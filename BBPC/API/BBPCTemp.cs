@@ -8,7 +8,7 @@ namespace BBPC.API
     {
         public const string ModGUID = "com.baymaxawa.bbpc";
         public const string ModName = "Baldi's Basics Plus Chinese Translation";
-        public const string ModVersion = "0.0.0.5";
+        public const string ModVersion = "0.1.0.0";
 
         public static string PostersFile = "PosterSettings.json";
     }
