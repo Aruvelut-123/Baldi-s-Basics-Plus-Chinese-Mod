@@ -1,6 +1,7 @@
 ﻿using BBPC.API;
 using BepInEx;
 using HarmonyLib;
+using MTM101BaldAPI;
 using MTM101BaldAPI.AssetTools;
 using MTM101BaldAPI.OptionsAPI;
 using MTM101BaldAPI.Registers;
@@ -25,12 +26,14 @@ namespace BBPC
 
     [BepInPlugin(BBPCTemp.ModGUID, BBPCTemp.ModName, BBPCTemp.ModVersion)]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInProcess("BALDI.exe")]
     public class Plugin : BaseUnityPlugin
     {
         public static Plugin Instance { get; private set; } = null!;
         private Harmony? harmonyInstance = null!;
-        private const string expectedGameVersion = "0.12";
+        private const string expectedGameVersion = "0.12.2";
 
         private static readonly string[] menuTextureNames =
         {
@@ -53,9 +56,10 @@ namespace BBPC
             API.Logger.Info($"纹理: {(ConfigManager.AreTexturesEnabled() ? "启用" : "禁用")}, " +
                            $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}");
 
-            harmonyInstance = new Harmony(BBPCTemp.ModGUID);
             FileLog.Reset();
-            harmonyInstance.PatchAll();
+
+            Harmony harmony = new Harmony(BBPCTemp.ModGUID);
+            harmony.PatchAllConditionals();
 
             ConfigManager.is_alpha.Value = false;
             ConfigManager.is_beta.Value = false;

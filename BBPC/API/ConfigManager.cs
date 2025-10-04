@@ -101,7 +101,7 @@ namespace BBPC.API
             nextButton.OnPress = new UnityEngine.Events.UnityEvent();
             nextButton.OnPress.AddListener(() => changeLang(true));
             nextButton.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
-            toggleWatermarkButton = CreateToggle("WatermarkToggleButton", Plugin.Instance.GetTranslationKey("BBPC_ToggleWatermark", "Disable Watermark"), ConfigManager.show_watermark.Value, new Vector2(50, -75), 250);
+            if (ConfigManager.is_beta.Value || ConfigManager.is_alpha.Value || ConfigManager.is_dev.Value) toggleWatermarkButton = CreateToggle("WatermarkToggleButton", Plugin.Instance.GetTranslationKey("BBPC_ToggleWatermark", "Disable Watermark"), ConfigManager.show_watermark.Value, new Vector2(50, -75), 250);
             StandardMenuButton applyButton = CreateApplyButton(() => { refresh_localization(); });
             AddTooltip(applyButton, Plugin.Instance.GetTranslationKey("BPPC_Apply_Tooltip", "Apply and restart"));
             CurrectLanguage.gameObject.SetActive(true);

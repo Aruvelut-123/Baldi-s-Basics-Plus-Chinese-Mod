@@ -55,6 +55,9 @@
     <Reference Include="BepInEx">
       <HintPath>..\Dlls\BepInEx.dll</HintPath>
     </Reference>
+    <Reference Include="MoonSharp.Interpreter">
+      <HintPath>..\Dlls\MoonSharp.Interpreter.dll</HintPath>
+    </Reference>
     <Reference Include="mscorlib">
       <HintPath>..\mscorlib.dll</HintPath>
     </Reference>
@@ -66,6 +69,15 @@
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\Dlls\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="PlusLevelStudio">
+      <HintPath>..\Dlls\PlusLevelStudio.dll</HintPath>
+    </Reference>
+    <Reference Include="PlusStudioLevelFormat">
+      <HintPath>..\Dlls\PlusStudioLevelFormat.dll</HintPath>
+    </Reference>
+    <Reference Include="PlusStudioLevelLoader">
+      <HintPath>..\Dlls\PlusStudioLevelLoader.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Http">
       <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6\System.Net.Http.dll</HintPath>

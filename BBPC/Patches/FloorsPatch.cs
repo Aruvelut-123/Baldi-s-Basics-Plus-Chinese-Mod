@@ -62,7 +62,7 @@ namespace BBPC.Patches
                 }
                 catch (Exception e)
                 {
-                    Debug.LogWarning($"BBPC Russifier: Failed to get CurrentLevel from BBTimes via reflection: {e.Message}");
+                    Debug.LogWarning($"BBPC: Failed to get CurrentLevel from BBTimes via reflection: {e.Message}");
                 }
 
                 return true;

@@ -20,8 +20,7 @@ namespace BBPC.API
             var method = frame.GetMethod();
             string className = method?.DeclaringType?.Name ?? "UnknownClass";
             string methodName = method?.Name ?? "UnknownMethod";
-            string time = DateTime.Now.ToString("HH:mm:ss.fff");
-            return $"[{time}] [{level}] [{className}.{methodName}] {message}";
+            return $"[{className}.{methodName}] {message}";
         }
 
         public static void Debug(string message)

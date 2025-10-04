@@ -1,9 +1,5 @@
 ﻿using HarmonyLib;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BBPC.Patches
 {
@@ -17,6 +13,10 @@ namespace BBPC.Patches
             if (__result == "Left Mouse Button")
             {
                 __result = "鼠标左键";
+            }
+            else if (__result == "Right Mouse Button")
+            {
+                __result = "鼠标右键";
             }
         }
     }
