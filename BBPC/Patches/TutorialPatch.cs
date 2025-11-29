@@ -1,7 +1,8 @@
+using BBPC.API;
 using HarmonyLib;
-using UnityEngine;
-using TMPro;
 using System.Collections;
+using TMPro;
+using UnityEngine;
 
 namespace BBPC.Patches
 {
@@ -11,7 +12,7 @@ namespace BBPC.Patches
         [HarmonyPostfix]
         public static void Postfix(TutorialGameManager __instance)
         {
-            __instance.StartCoroutine(ApplyChangesWithDelay());
+            if (!BBPCTemp.is_eng) __instance.StartCoroutine(ApplyChangesWithDelay());
         }
 
         private static IEnumerator ApplyChangesWithDelay()

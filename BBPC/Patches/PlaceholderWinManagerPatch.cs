@@ -1,9 +1,10 @@
+using BBPC.API;
 using HarmonyLib;
+using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using TMPro;
 using UnityEngine;
-using System.Collections;
-using System.Reflection;
 
 namespace BBPC.Patches
 {
@@ -17,7 +18,7 @@ namespace BBPC.Patches
             [HarmonyPostfix]
             private static void Postfix(PlaceholderWinManager __instance)
             {
-                if (!initialized)
+                if (!initialized && !BBPCTemp.is_eng)
                 {
                     ApplyLocalizationToErrorScreen(__instance);
                     initialized = true;

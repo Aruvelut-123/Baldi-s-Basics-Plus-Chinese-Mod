@@ -18,6 +18,7 @@ namespace BBPC.Patches
             { "TimeText", "BBPC_Elevator_TimeText" },
             { "YTPText", "BBPC_Elevator_YTPText" },
             { "TotalText", "BBPC_Elevator_TotalText" },
+            { "StickerText", "BBPC_Elevator_StickerText" },
             { "GradeText", "BBPC_Elevator_GradeText" },
             { "MultiplierText", "BBPC_Elevator_MultiplierText" },
             { "TimeBonusText", "BBPC_Elevator_TimeBonusText" },
@@ -53,11 +54,15 @@ namespace BBPC.Patches
         [HarmonyPostfix]
         static void StartPostfix(ElevatorScreen __instance)
         {
-            fixesApplied = false;
+            if (!BBPCTemp.is_eng)
+            {
+                fixesApplied = false;
+
+                __instance.OnLoadReady += () => {
+                    ApplyPatchesToBigScreen(__instance);
+                };
+            }
             
-            __instance.OnLoadReady += () => {
-                ApplyPatchesToBigScreen(__instance);
-            };
         }
         
         [HarmonyPatch("StartGame")]

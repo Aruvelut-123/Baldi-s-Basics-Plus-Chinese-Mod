@@ -29,7 +29,7 @@ namespace BBPC
             [HarmonyPostfix]
             private static void Postfix(MenuButton __instance)
             {
-                if (__instance != null && __instance.name == "Endless")
+                if (__instance != null && __instance.name == "Endless" && !BBPCTemp.is_eng)
                 {
                     fixesApplied = false;
                 }
@@ -42,12 +42,12 @@ namespace BBPC
             [HarmonyPostfix]
             private static void Postfix(GameObject __instance, bool value)
             {
-                if (__instance.name == "Menu" && value)
+                if (__instance.name == "Menu" && value && !BBPCTemp.is_eng)
                 {
                     fixesApplied = false;
                 }
                 
-                if (__instance.name == "PickEndlessMap" && value && !fixesApplied)
+                if (__instance.name == "PickEndlessMap" && value && !fixesApplied && !BBPCTemp.is_eng)
                 {
                     ApplyButtonSizeFixes(__instance.transform);
                     ApplyLocalization(__instance.transform);

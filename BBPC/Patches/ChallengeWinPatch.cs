@@ -1,7 +1,8 @@
+using BBPC.API;
 using HarmonyLib;
+using System.Linq;
 using TMPro;
 using UnityEngine;
-using System.Linq;
 
 namespace BBPC.Patches
 {
@@ -20,7 +21,7 @@ namespace BBPC.Patches
                 var textComponents = __instance.GetComponentsInChildren<TextMeshProUGUI>(true);
                 var targetText = textComponents.FirstOrDefault(t => t.name == "Text (TMP)");
 
-                if (targetText != null)
+                if (targetText != null && !BBPCTemp.is_eng)
                 {
                     ApplyLocalizer(targetText);
                 }

@@ -24,12 +24,12 @@ namespace BBPC
             [HarmonyPostfix]
             private static void Postfix(GameObject __instance, bool value)
             {
-                if (__instance.name == "Menu" && value)
+                if (__instance.name == "Menu" && value && !BBPCTemp.is_eng)
                 {
                     fixesApplied = false;
                 }
                 
-                if (__instance.name == "PickChallenge" && value && !fixesApplied)
+                if (__instance.name == "PickChallenge" && value && !fixesApplied && !BBPCTemp.is_eng)
                 {
                     ApplyButtonSizeFixes(__instance.transform);
                     fixesApplied = true;

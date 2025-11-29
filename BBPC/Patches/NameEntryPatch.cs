@@ -26,7 +26,7 @@ namespace BBPC
             [HarmonyPostfix]
             private static void Postfix(GameObject __instance, bool value)
             {
-                if (__instance.name == "NameEntry")
+                if (__instance.name == "NameEntry" && !BBPCTemp.is_eng)
                 {
                      if (value)
                      {
@@ -52,8 +52,11 @@ namespace BBPC
             [HarmonyPostfix]
             private static void Postfix(NameManager __instance)
             {
-                buttonFixesApplied = false;
-                ApplyNewFileButtonFixes(__instance);
+                if (!BBPCTemp.is_eng)
+                {
+                    buttonFixesApplied = false;
+                    ApplyNewFileButtonFixes(__instance);
+                }
             }
         }
         
@@ -64,8 +67,11 @@ namespace BBPC
             [HarmonyPostfix]
             private static void Postfix(NameManager __instance)
             {
-                buttonFixesApplied = false; 
-                ApplyNewFileButtonFixes(__instance);
+                if (!BBPCTemp.is_eng)
+                {
+                    buttonFixesApplied = false;
+                    ApplyNewFileButtonFixes(__instance);
+                }
             }
         }
         

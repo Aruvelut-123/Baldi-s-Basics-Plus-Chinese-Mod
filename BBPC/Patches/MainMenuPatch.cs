@@ -94,8 +94,11 @@ namespace BBPC.Patches
             {
                 if (__instance.name == "Menu" && value)
                 {
-                    ApplySizeChanges(__instance.transform);
-                    ApplyLocalization(__instance.transform);
+                    if (!BBPCTemp.is_eng)
+                    {
+                        ApplySizeChanges(__instance.transform);
+                        ApplyLocalization(__instance.transform);
+                    }
                     CreateModInfoButton(__instance.transform);
                 }
             }

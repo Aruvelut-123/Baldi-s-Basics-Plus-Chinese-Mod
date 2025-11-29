@@ -1,4 +1,5 @@
 ﻿using BBPC.API;
+using BBPC.Patches;
 using BepInEx;
 using HarmonyLib;
 using MTM101BaldAPI;
@@ -7,6 +8,7 @@ using MTM101BaldAPI.OptionsAPI;
 using MTM101BaldAPI.Registers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PlusLevelStudio.Menus;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -25,15 +27,13 @@ namespace BBPC
     }
 
     [BepInPlugin(BBPCTemp.ModGUID, BBPCTemp.ModName, BBPCTemp.ModVersion)]
-    [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     [BepInProcess("BALDI.exe")]
     public class Plugin : BaseUnityPlugin
     {
         public static Plugin Instance { get; private set; } = null!;
         private Harmony? harmonyInstance = null!;
-        private const string expectedGameVersion = "0.12.2";
+        private const string expectedGameVersion = "0.13";
 
         private static readonly string[] menuTextureNames =
         {
@@ -59,6 +59,7 @@ namespace BBPC
             FileLog.Reset();
 
             Harmony harmony = new Harmony(BBPCTemp.ModGUID);
+
             harmony.PatchAllConditionals();
 
             ConfigManager.is_alpha.Value = false;
@@ -72,6 +73,7 @@ namespace BBPC
 
             string modPath = AssetLoader.GetModPath(this);
             string langPath = Path.Combine(modPath, "Language", ConfigManager.currect_lang.Value);
+            if (ConfigManager.currect_lang.Value == "English") BBPCTemp.is_eng = true;
             if (Directory.Exists(langPath))
             {
                 API.Logger.Info($"检测到本地化文件夹: {langPath}");

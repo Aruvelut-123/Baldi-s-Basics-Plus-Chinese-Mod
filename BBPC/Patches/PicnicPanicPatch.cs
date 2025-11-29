@@ -22,7 +22,7 @@ namespace BBPC
         {
             static void Postfix(MinigameBase __instance)
             {
-                if (__instance != null && __instance.name.Contains("Picnic"))
+                if (__instance != null && __instance.name.Contains("Picnic") && !BBPCTemp.is_eng)
                 {
                     __instance.StartCoroutine(ApplyPatchWithDelay(__instance));
                 }

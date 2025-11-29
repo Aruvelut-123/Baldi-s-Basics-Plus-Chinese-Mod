@@ -1,7 +1,8 @@
+using BBPC.API;
 using HarmonyLib;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using System.Collections.Generic;
 
 namespace BBPC
 {
@@ -57,53 +58,56 @@ namespace BBPC
         [HarmonyPostfix]
         private static void Initialize_Postfix(TeleporterRoomFunction __instance, RoomController room)
         {
-            if (room == null || room.ec == null) return;
-            
-            if (room.ec.name.Contains("Laboratory_Lvl4") || room.ec.name.Contains("Laboratory_Lvl5"))
+            if (!BBPCTemp.is_eng)
             {
-                Transform? functionBase = FindInChildrenIncludingInactive(room.transform, "TeleporterRoomFunctionObjectBase");
-                
-                if (functionBase == null) return;
-                
-                List<Transform> labelObjects = new List<Transform>();
-                for (int i = 0; i < 4; i++)
+                if (room == null || room.ec == null) return;
+
+                if (room.ec.name.Contains("Laboratory_Lvl4") || room.ec.name.Contains("Laboratory_Lvl5"))
                 {
-                    Transform? label = FindInChildrenIncludingInactive(functionBase, "RoomLabels_" + i);
-                    if (label != null)
+                    Transform? functionBase = FindInChildrenIncludingInactive(room.transform, "TeleporterRoomFunctionObjectBase");
+
+                    if (functionBase == null) return;
+
+                    List<Transform> labelObjects = new List<Transform>();
+                    for (int i = 0; i < 4; i++)
                     {
-                        labelObjects.Add(label);
-                    }
-                }
-                
-                if (labelObjects.Count == 0) return;
-                
-                for (int i = 0; i < labelObjects.Count; i++)
-                {
-                    Transform? textTransform = FindInChildrenIncludingInactive(labelObjects[i], "Text (TMP)");
-                    
-                    if (textTransform != null)
-                    {
-                        TextMeshPro? textComponent = textTransform.GetComponent<TextMeshPro>();
-                        if (textComponent != null)
+                        Transform? label = FindInChildrenIncludingInactive(functionBase, "RoomLabels_" + i);
+                        if (label != null)
                         {
-                            string localizationKey = "BBPC_RoomLabel_" + i;
-                            
-                            TeleporterTextLocalizer? localizer = textComponent.GetComponent<TeleporterTextLocalizer>();
-                            if (localizer == null)
+                            labelObjects.Add(label);
+                        }
+                    }
+
+                    if (labelObjects.Count == 0) return;
+
+                    for (int i = 0; i < labelObjects.Count; i++)
+                    {
+                        Transform? textTransform = FindInChildrenIncludingInactive(labelObjects[i], "Text (TMP)");
+
+                        if (textTransform != null)
+                        {
+                            TextMeshPro? textComponent = textTransform.GetComponent<TextMeshPro>();
+                            if (textComponent != null)
                             {
-                                TextLocalizer? oldLocalizer = textComponent.GetComponent<TextLocalizer>();
-                                if (oldLocalizer != null)
+                                string localizationKey = "BBPC_RoomLabel_" + i;
+
+                                TeleporterTextLocalizer? localizer = textComponent.GetComponent<TeleporterTextLocalizer>();
+                                if (localizer == null)
                                 {
-                                    Object.Destroy(oldLocalizer);
+                                    TextLocalizer? oldLocalizer = textComponent.GetComponent<TextLocalizer>();
+                                    if (oldLocalizer != null)
+                                    {
+                                        Object.Destroy(oldLocalizer);
+                                    }
+
+                                    localizer = textComponent.gameObject.AddComponent<TeleporterTextLocalizer>();
+                                    localizer.key = localizationKey;
                                 }
-                                
-                                localizer = textComponent.gameObject.AddComponent<TeleporterTextLocalizer>();
-                                localizer.key = localizationKey;
-                            }
-                            else if (localizer.key != localizationKey)
-                            {
-                                localizer.key = localizationKey;
-                                localizer.RefreshLocalization();
+                                else if (localizer.key != localizationKey)
+                                {
+                                    localizer.key = localizationKey;
+                                    localizer.RefreshLocalization();
+                                }
                             }
                         }
                     }

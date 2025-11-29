@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using BBPC.API;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
@@ -38,7 +39,7 @@ namespace BBPC.Patches
             [HarmonyPostfix]
             private static void Postfix(string sceneName)
             {
-                if (sceneName == "Credits")
+                if (sceneName == "Credits" && !BBPCTemp.is_eng)
                 {
                     GameObject patchInitializer = new GameObject("CreditsPatchInitializer");
                     patchInitializer.AddComponent<CreditsPatchInitializer>();
@@ -54,7 +55,7 @@ namespace BBPC.Patches
             [HarmonyPriority(Priority.Low)]
             private static void Postfix(Credits __instance)
             {
-                if (!initialized)
+                if (!initialized && !BBPCTemp.is_eng)
                 {
                     __instance.StartCoroutine(InitializeLocalization(__instance));
                 }
@@ -76,7 +77,7 @@ namespace BBPC.Patches
             [HarmonyPrefix]
             private static void Prefix(Credits __instance)
             {
-                if (!initialized)
+                if (!initialized && !BBPCTemp.is_eng)
                 {
                     ApplyLocalizationToAllCreditsObjects();
                     initialized = true;
@@ -90,7 +91,7 @@ namespace BBPC.Patches
             [HarmonyPostfix]
             private static void Postfix(GameObject __instance, bool value)
             {
-                if (value && SceneManager.GetActiveScene().name == "Credits" && 
+                if (!BBPCTemp.is_eng && value && SceneManager.GetActiveScene().name == "Credits" && 
                     __instance.name.StartsWith("Main Credits"))
                 {
                     ApplyLocalizationDirectly(__instance.transform);
@@ -105,19 +106,22 @@ namespace BBPC.Patches
         
         private static void ApplyLocalizationToAllCreditsObjects()
         {
-            
-            Canvas[] screens = Resources.FindObjectsOfTypeAll<Canvas>();
-            foreach (Canvas screen in screens)
+            if (!BBPCTemp.is_eng)
             {
-                if (screen.name.StartsWith("Main Credits"))
+                Canvas[] screens = Resources.FindObjectsOfTypeAll<Canvas>();
+                foreach (Canvas screen in screens)
                 {
-                    ApplyLocalizationDirectly(screen.transform);
-                    
-                    ProcessChildren(screen.transform);
+                    if (screen.name.StartsWith("Main Credits"))
+                    {
+                        ApplyLocalizationDirectly(screen.transform);
+
+                        ProcessChildren(screen.transform);
+                    }
                 }
+
+                initialized = true;
             }
-            
-            initialized = true;
+            else initialized = true;
         }
         
         private static void ProcessChildren(Transform parent)

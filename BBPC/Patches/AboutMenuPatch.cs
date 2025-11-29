@@ -1,11 +1,12 @@
+using BBPC.API;
 using HarmonyLib;
+using System.Collections.Generic;
+using System.Security.Policy;
+using System.Text;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
-using System.Collections.Generic;
-using System.Text;
-using TMPro;
-using System.Security.Policy;
 
 namespace BBPC
 {
@@ -155,7 +156,7 @@ namespace BBPC
                     string url = null!;
                     if (API.ConfigManager.currect_lang.Value == "SChinese")
                     {
-                        url = "https://www.minecraftisbest.top/zh/";
+                        url = "https://www.minecraftisbest.top";
                     }
                     else
                     {
@@ -172,6 +173,7 @@ namespace BBPC
                         targetTransform.GetComponent<WebsiteOpener>().url = "https://github.com/Aruvelut-123/Baldi-s-Basics-Plus-Chinese-Mod/issues";
                         targetTransform.gameObject.SetActive(true);
                     }
+                    if (BBPCTemp.is_eng) continue;
                     TextMeshProUGUI textComponent = targetTransform.GetComponent<TextMeshProUGUI>();
                     if (textComponent != null)
                     {

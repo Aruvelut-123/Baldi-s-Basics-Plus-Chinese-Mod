@@ -59,8 +59,11 @@ namespace BBPC
         {
             ApplyChanges(__instance);
             ApplyChangesToAllApplyButtons(__instance);
-            
-            ApplyLocalization(__instance);
+
+            if (!BBPCTemp.is_eng)
+            {
+                ApplyLocalization(__instance);
+            }
         }
 
         private static void ApplyChangesToAllApplyButtons(OptionsMenu optionsMenuInstance)

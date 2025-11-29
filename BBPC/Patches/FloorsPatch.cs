@@ -1,9 +1,10 @@
+using BBPC.API;
+using BepInEx.Bootstrap;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
-using BepInEx.Bootstrap;
 
 namespace BBPC.Patches
 {
@@ -42,41 +43,45 @@ namespace BBPC.Patches
         [HarmonyPrefix]
         private static bool ElevatorScreenUpdateFloorDisplayPrefix(ElevatorScreen __instance)
         {
-            if (Chainloader.PluginInfos.ContainsKey("com.pixelguy.bbtimes"))
+            if (!BBPCTemp.is_eng)
             {
-                try
+                if (Chainloader.PluginInfos.ContainsKey("com.pixelguy.bbtimes"))
                 {
-                    Type bbTimesManagerType = Type.GetType("BBTimes.Manager.BBTimesManager, BBTimes");
-                    if (bbTimesManagerType != null)
+                    try
                     {
-                        FieldInfo currentLevelField = bbTimesManagerType.GetField("CurrentLevel", BindingFlags.Public | BindingFlags.Static);
-                        if (currentLevelField != null)
+                        Type bbTimesManagerType = Type.GetType("BBTimes.Manager.BBTimesManager, BBTimes");
+                        if (bbTimesManagerType != null)
                         {
-                            SceneObject currentLevel = (SceneObject)currentLevelField.GetValue(null);
-                            if (currentLevel != null)
+                            FieldInfo currentLevelField = bbTimesManagerType.GetField("CurrentLevel", BindingFlags.Public | BindingFlags.Static);
+                            if (currentLevelField != null)
                             {
-                                UpdateFloorTitle(currentLevel);
+                                SceneObject currentLevel = (SceneObject)currentLevelField.GetValue(null);
+                                if (currentLevel != null)
+                                {
+                                    UpdateFloorTitle(currentLevel);
+                                }
                             }
                         }
                     }
+                    catch (Exception e)
+                    {
+                        Debug.LogWarning($"BBPC: Failed to get CurrentLevel from BBTimes via reflection: {e.Message}");
+                    }
+
+                    return true;
                 }
-                catch (Exception e)
+
+                if (Singleton<CoreGameManager>.Instance != null &&
+                    Singleton<CoreGameManager>.Instance.sceneObject != null)
                 {
-                    Debug.LogWarning($"BBPC: Failed to get CurrentLevel from BBTimes via reflection: {e.Message}");
+                    SceneObject currentScene = Singleton<CoreGameManager>.Instance.sceneObject;
+
+                    UpdateFloorTitle(currentScene);
                 }
 
                 return true;
             }
-
-            if (Singleton<CoreGameManager>.Instance != null &&
-                Singleton<CoreGameManager>.Instance.sceneObject != null)
-            {
-                SceneObject currentScene = Singleton<CoreGameManager>.Instance.sceneObject;
-                
-                UpdateFloorTitle(currentScene);
-            }
-            
-            return true;
+            else return true;
         }
 
         private static void UpdateFloorTitle(SceneObject scene)

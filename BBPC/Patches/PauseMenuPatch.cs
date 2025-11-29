@@ -1,8 +1,9 @@
+using BBPC.API;
 using HarmonyLib;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using System.Collections;
 
 namespace BBPC
 {
@@ -25,7 +26,7 @@ namespace BBPC
             [HarmonyPostfix]
             private static void Postfix(CoreGameManager __instance) 
             {
-                if (__instance.pauseScreen != null) 
+                if (__instance.pauseScreen != null && !BBPCTemp.is_eng) 
                 {
                     __instance.StartCoroutine(InitPauseScreenComponents(__instance));
                 }
@@ -56,7 +57,7 @@ namespace BBPC
             [HarmonyPostfix]
             private static void Postfix(GameObject __instance, bool value)
             {
-                if (value && __instance.name == "PauseScreen" && !initialized)
+                if (value && __instance.name == "PauseScreen" && !initialized && !BBPCTemp.is_eng)
                 {
                     PrepareLocalizationComponents();
                     initialized = true;
@@ -70,7 +71,7 @@ namespace BBPC
             [HarmonyPostfix]
             private static void Postfix(bool openScreen, CoreGameManager __instance, bool ___paused)
             {
-                if (openScreen && ___paused && !initialized)
+                if (openScreen && ___paused && !initialized && !BBPCTemp.is_eng)
                 {
                     PrepareLocalizationComponents();
                     initialized = true;

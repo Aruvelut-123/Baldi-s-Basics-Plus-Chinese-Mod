@@ -24,7 +24,7 @@ namespace BBPC
             [HarmonyPostfix]
             private static void Postfix(MenuButton __instance)
             {
-                if (__instance != null && __instance.name == "Main")
+                if (__instance != null && __instance.name == "Main" && !BBPCTemp.is_eng)
                 {
                     CoroutineHelper.StartCoroutine(WaitAndCheckHideSeekMenu());
                 }
@@ -37,12 +37,12 @@ namespace BBPC
             [HarmonyPostfix]
             private static void Postfix(GameObject __instance, bool value)
             {
-                if (__instance.name == "Menu" && value)
+                if (__instance.name == "Menu" && value && !BBPCTemp.is_eng)
                 {
                     fixesApplied = false;
                 }
                 
-                if (__instance.name == "HideSeekMenu" && value && !fixesApplied)
+                if (__instance.name == "HideSeekMenu" && value && !fixesApplied && !BBPCTemp.is_eng)
                 {
                     ApplyButtonSizeFixes(__instance.transform);
                     

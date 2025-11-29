@@ -40,7 +40,7 @@ namespace BBPC
             [HarmonyPrefix]
             private static void Prefix()
             {
-                ApplyFixesToPickMode();
+                if (!BBPCTemp.is_eng) ApplyFixesToPickMode();
             }
         }
         
@@ -50,12 +50,12 @@ namespace BBPC
             [HarmonyPostfix]
             private static void Postfix(GameObject __instance, bool value)
             {
-                if (__instance.name == "Menu" && value)
+                if (__instance.name == "Menu" && value && !BBPCTemp.is_eng)
                 {
                     fixesApplied = false;
                 }
                 
-                if (__instance.name == "PickMode" && value && !fixesApplied)
+                if (__instance.name == "PickMode" && value && !fixesApplied && !BBPCTemp.is_eng)
                 {
                     ApplyButtonPositionFixes(__instance.transform);
                     fixesApplied = true;

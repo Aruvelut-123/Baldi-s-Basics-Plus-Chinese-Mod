@@ -1,8 +1,9 @@
+using BBPC.API;
 using HarmonyLib;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using System.Collections;
 
 namespace BBPC.Patches
 {
@@ -29,7 +30,7 @@ namespace BBPC.Patches
         [HarmonyPostfix]
         private static void RestartLevelPostfix(EndlessGameManager __instance)
         {
-            if (!initialized)
+            if (!initialized && !BBPCTemp.is_eng)
             {
                 __instance.StartCoroutine(InitEndlessScreenComponents());
                 initialized = true;
