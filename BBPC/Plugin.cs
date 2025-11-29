@@ -21,6 +21,16 @@ using UnityEngine.UI;
 namespace BBPC
 {
     [Serializable]
+    public class PosterTextData
+    {
+        public string textKey = string.Empty;
+        public IntVector2 position;
+        public IntVector2 size;
+        public int fontSize;
+        public Color color;
+    }
+
+    [Serializable]
     public class PosterTextTable
     {
         public List<PosterTextData> items = new List<PosterTextData>();
@@ -54,7 +64,8 @@ namespace BBPC
 
             API.Logger.Info($"插件 {BBPCTemp.ModName} 已初始化。");
             API.Logger.Info($"纹理: {(ConfigManager.AreTexturesEnabled() ? "启用" : "禁用")}, " +
-                           $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}");
+                           $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}" +
+                           $"开发模式: {(ConfigManager.IsDevModeEnabled() ? "启用" : "禁用")}");
 
             FileLog.Reset();
 
@@ -201,6 +212,12 @@ namespace BBPC
                 UpdatePosters(modPath);
             }
 
+            if (ConfigManager.IsDevModeEnabled())
+            {
+                yield return "提取海报信息中 (开发模式)...";
+                PosterScanner.ScanAndExportNewPosters(modPath);
+            }
+
             API.Logger.Info("资源加载完成！");
         }
 
@@ -332,8 +349,8 @@ namespace BBPC
                                 var modifiedData = posterData.items[i];
 
                                 sourceData.textKey = modifiedData.textKey;
-                                sourceData.position = modifiedData.position;
-                                sourceData.size = modifiedData.size;
+                                sourceData.position = new IntVector2(modifiedData.position.x, modifiedData.position.z);
+                                sourceData.size = new IntVector2(modifiedData.size.x, modifiedData.size.z);
                                 sourceData.fontSize = modifiedData.fontSize;
                                 sourceData.color = modifiedData.color;
                             }

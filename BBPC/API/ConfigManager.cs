@@ -16,6 +16,7 @@ namespace BBPC.API
     {
         public static ConfigEntry<bool> EnableTextures { get; private set; } = null!;
         public static ConfigEntry<bool> EnableLogging { get; private set; } = null!;
+        public static ConfigEntry<bool> EnableDevMode { get; private set; } = null!;
         public static ConfigEntry<bool> is_dev { get; private set; } = null!;
         public static ConfigEntry<bool> is_beta { get; private set; } = null!;
         public static ConfigEntry<bool> is_alpha { get; private set; } = null!;
@@ -35,6 +36,7 @@ namespace BBPC.API
             version = plugin.Config.Bind("General", "version", "Dev Build", "Version number that displays in game.");
             EnableTextures = plugin.Config.Bind("General", "Enable Textures", true, "Enable or disable texture replacement.");
             EnableLogging = plugin.Config.Bind("General", "Enable Logging", false, "Enable or disable logging.");
+            EnableDevMode = plugin.Config.Bind("Development", "Enable Dev Mode", false, "Enable development mode (scans and exports new posters). DISABLE FOR RELEASE!");
             currect_lang = plugin.Config.Bind("General", "Currect Language", "SChinese", "The Language that currectly using.");
             show_watermark = plugin.Config.Bind("General", "Disable Watermark", false, "Enable or disable watermark display.");
 
@@ -49,6 +51,11 @@ namespace BBPC.API
         public static bool IsLoggingEnabled()
         {
             return EnableLogging.Value;
+        }
+
+        public static bool IsDevModeEnabled()
+        {
+            return EnableDevMode.Value;
         }
     }
 

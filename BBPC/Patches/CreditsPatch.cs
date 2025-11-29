@@ -39,7 +39,7 @@ namespace BBPC.Patches
             [HarmonyPostfix]
             private static void Postfix(string sceneName)
             {
-                if (sceneName == "Credits" && !BBPCTemp.is_eng)
+                if (sceneName == "Credits")
                 {
                     GameObject patchInitializer = new GameObject("CreditsPatchInitializer");
                     patchInitializer.AddComponent<CreditsPatchInitializer>();
