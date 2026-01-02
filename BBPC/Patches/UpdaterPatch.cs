@@ -71,7 +71,7 @@ namespace BBPC.Patches
             {
                 if (n == "Reminder")
                 {
-                    StackFrame[]? stackFrames = new System.Diagnostics.StackTrace(true).GetFrames();
+                    StackFrame[]? stackFrames = new StackTrace(true).GetFrames();
                     if (stackFrames != null)
                     {
                         foreach (var frame in stackFrames)
@@ -107,7 +107,7 @@ namespace BBPC.Patches
             {
                 if (__result != null && __result.name == "Reminder")
                 {
-                    StackFrame[]? stackFrames = new System.Diagnostics.StackTrace(true).GetFrames();
+                    StackFrame[]? stackFrames = new StackTrace(true).GetFrames();
                     if (stackFrames != null)
                     {
                         foreach (var frame in stackFrames)

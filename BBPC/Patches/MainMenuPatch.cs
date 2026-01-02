@@ -236,9 +236,9 @@ namespace BBPC.Patches
             if (string.IsNullOrEmpty(localizationKey))
             {
                 localizationKey = buttonName;
+                localizer.key = localizationKey;
             }
 
-            localizer.key = localizationKey;
             localizer.RefreshLocalization();
 
             StandardMenuButton button = buttonObj.ConvertToButton<StandardMenuButton>(true);
@@ -268,9 +268,9 @@ namespace BBPC.Patches
             if (string.IsNullOrEmpty(localizationKey))
             {
                 localizationKey = buttonName;
+                localizer.key = localizationKey;
             }
             
-            localizer.key = localizationKey;
             localizer.RefreshLocalization();
             
             StandardMenuButton button = buttonObj.ConvertToButton<StandardMenuButton>(true);

@@ -1,5 +1,4 @@
 ﻿using BBPC.API;
-using BBPC.Patches;
 using BepInEx;
 using HarmonyLib;
 using MTM101BaldAPI;
@@ -8,7 +7,6 @@ using MTM101BaldAPI.OptionsAPI;
 using MTM101BaldAPI.Registers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using PlusLevelStudio.Menus;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -37,13 +35,15 @@ namespace BBPC
     }
 
     [BepInPlugin(BBPCTemp.ModGUID, BBPCTemp.ModName, BBPCTemp.ModVersion)]
-    [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
+    [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInDependency("pixelguy.pixelmodding.baldiplus.bbextracontent", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("pixelguy.pixelmodding.baldiplus.newdecors", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInProcess("BALDI.exe")]
     public class Plugin : BaseUnityPlugin
     {
         public static Plugin Instance { get; private set; } = null!;
         private Harmony? harmonyInstance = null!;
-        private const string expectedGameVersion = "0.13";
+        private string[] expectedGameVersions = ["0.13", "0.13.1"];
 
         private static readonly string[] menuTextureNames =
         {
@@ -62,16 +62,12 @@ namespace BBPC
 
             watermarkGO = new Watermark(ConfigManager.is_dev.Value, ConfigManager.is_alpha.Value, ConfigManager.is_beta.Value, this);
 
-            API.Logger.Info($"插件 {BBPCTemp.ModName} 已初始化。");
+            API.Logger.Info($"插件 {BBPCTemp.ModName} 正在初始化...");
             API.Logger.Info($"纹理: {(ConfigManager.AreTexturesEnabled() ? "启用" : "禁用")}, " +
                            $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}" +
                            $"开发模式: {(ConfigManager.IsDevModeEnabled() ? "启用" : "禁用")}");
 
-            FileLog.Reset();
-
-            Harmony harmony = new Harmony(BBPCTemp.ModGUID);
-
-            harmony.PatchAllConditionals();
+            new Harmony(BBPCTemp.ModGUID).PatchAllConditionals();
 
             ConfigManager.is_alpha.Value = false;
             ConfigManager.is_beta.Value = false;
@@ -80,7 +76,7 @@ namespace BBPC
             else if (ConfigManager.version.Value.Contains("Beta")) ConfigManager.is_beta.Value = true;
             else if (ConfigManager.version.Value.Contains("Alpha")) ConfigManager.is_alpha.Value = true;
 
-            VersionCheck.CheckGameVersion(expectedGameVersion, Info);
+            VersionCheck.CheckGameVersion(expectedGameVersions, Info);
 
             string modPath = AssetLoader.GetModPath(this);
             string langPath = Path.Combine(modPath, "Language", ConfigManager.currect_lang.Value);
@@ -118,7 +114,7 @@ namespace BBPC
                 }
                 return result;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return "";
             }
@@ -127,9 +123,6 @@ namespace BBPC
         private void OnMenu(OptionsMenu menu, CustomOptionsHandler handler)
         {
             BBPCOptionsCategory category = handler.AddCategory<BBPCOptionsCategory>(GetTranslationKey("BBPC_Options_Title", "BBPC"));
-            TextLocalizer localizer = category.gameObject.AddComponent<TextLocalizer>();
-            localizer.key = "BBPC_Options_Title";
-            localizer.RefreshLocalization();
         }
 
         public string GetTranslationKey(string key, string default_obj, string lang="SChinese", bool custom_lang=false)
@@ -142,7 +135,7 @@ namespace BBPC
                 if (Directory.Exists(langPath))
                 {
                     string[] json_files = Directory.GetFiles(langPath, "*.json", SearchOption.AllDirectories);
-                    API.Logger.Debug(json_files.ToString());
+                    API.Logger.Debug(json_files.ToArray().ToString());
                     foreach (string json_file_path in json_files)
                     {
                         if (!json_file_path.Contains(lang)) continue;
@@ -158,7 +151,6 @@ namespace BBPC
                             }
                         }
                         file.Close();
-                        break;
                     }
                 }
             }
@@ -172,7 +164,7 @@ namespace BBPC
                     select x).First();
         }
 
-        public static StandardMenuButton CreateButtonWithSprite(string name, Sprite sprite, Sprite spriteOnHightlight = null, Transform parent = null, Vector3? positon = null)
+        public static StandardMenuButton CreateButtonWithSprite(string name, Sprite sprite, Sprite? spriteOnHightlight = null, Transform? parent = null, Vector3? positon = null)
         {
             GameObject gameObject = new GameObject(name);
             gameObject.layer = 5;

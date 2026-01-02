@@ -1,7 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
 using BBPC.API;
 using HarmonyLib;
+using Newtonsoft.Json.Linq;
+using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,7 +12,6 @@ namespace BBPC.Patches
     [HarmonyPatch]
     public class CreditsPatch
     {
-        private static bool initialized = false;
         private static readonly Dictionary<string, string> localizationKeys = new Dictionary<string, string>
         {
             { "Main Credits (5)/Text", "BBPC_Credits_ThankYouText" },
@@ -32,7 +32,7 @@ namespace BBPC.Patches
             { "Main Credits/Text", "BBPC_Credits_MainTitleText" },
             { "Main Credits/TrademarkText", "BBPC_Credits_UnityDisclaimerText" }
         };
-
+        
         [HarmonyPatch(typeof(SceneManager), "LoadScene", new[] { typeof(string) })]
         private static class LoadScenePatch
         {
@@ -52,22 +52,16 @@ namespace BBPC.Patches
         private static class CreditsStartPatch
         {
             [HarmonyPostfix]
-            [HarmonyPriority(Priority.Low)]
             private static void Postfix(Credits __instance)
             {
-                if (!initialized && !BBPCTemp.is_eng)
-                {
-                    __instance.StartCoroutine(InitializeLocalization(__instance));
-                }
+                __instance.StartCoroutine(InitializeLocalization(__instance));
             }
 
             private static IEnumerator InitializeLocalization(Credits credits)
             {
                 yield return null;
-                
+
                 ApplyLocalizationToAllCreditsObjects();
-                
-                initialized = true;
             }
         }
 
@@ -77,21 +71,17 @@ namespace BBPC.Patches
             [HarmonyPrefix]
             private static void Prefix(Credits __instance)
             {
-                if (!initialized && !BBPCTemp.is_eng)
-                {
-                    ApplyLocalizationToAllCreditsObjects();
-                    initialized = true;
-                }
+                 ApplyLocalizationToAllCreditsObjects();
             }
         }
-        
+
         [HarmonyPatch(typeof(GameObject), "SetActive")]
         private static class GameObjectSetActivePatch
         {
             [HarmonyPostfix]
             private static void Postfix(GameObject __instance, bool value)
             {
-                if (!BBPCTemp.is_eng && value && SceneManager.GetActiveScene().name == "Credits" && 
+                if (value && SceneManager.GetActiveScene().name == "Credits" &&
                     __instance.name.StartsWith("Main Credits"))
                 {
                     ApplyLocalizationDirectly(__instance.transform);
@@ -103,27 +93,22 @@ namespace BBPC.Patches
         {
             ApplyLocalizationToAllCreditsObjects();
         }
-        
+
         private static void ApplyLocalizationToAllCreditsObjects()
         {
-            if (!BBPCTemp.is_eng)
+
+            Canvas[] screens = Resources.FindObjectsOfTypeAll<Canvas>();
+            foreach (Canvas screen in screens)
             {
-                Canvas[] screens = Resources.FindObjectsOfTypeAll<Canvas>();
-                foreach (Canvas screen in screens)
+                if (screen.name.StartsWith("Main Credits"))
                 {
-                    if (screen.name.StartsWith("Main Credits"))
-                    {
-                        ApplyLocalizationDirectly(screen.transform);
+                    ApplyLocalizationDirectly(screen.transform);
 
-                        ProcessChildren(screen.transform);
-                    }
+                    ProcessChildren(screen.transform);
                 }
-
-                initialized = true;
             }
-            else initialized = true;
         }
-        
+
         private static void ProcessChildren(Transform parent)
         {
             foreach (Transform child in parent)
@@ -132,13 +117,13 @@ namespace BBPC.Patches
                 ProcessChildren(child);
             }
         }
-        
+
         private static void ApplyLocalizationDirectly(Transform obj)
         {
             foreach (var kvp in localizationKeys)
             {
                 string fullPath = GetFullPath(obj);
-                
+
                 if (fullPath == kvp.Key)
                 {
                     ApplyLocalizationToComponent(obj.gameObject, kvp.Value);
@@ -146,7 +131,7 @@ namespace BBPC.Patches
                 }
             }
         }
-        
+
         private static string GetFullPath(Transform obj)
         {
             if (obj.parent == null || obj.parent.name.Contains("Canvas"))
@@ -158,7 +143,7 @@ namespace BBPC.Patches
                 return obj.parent.name + "/" + obj.name;
             }
         }
-        
+
         private static void ApplyLocalizationToComponent(GameObject textObject, string key)
         {
             TextMeshProUGUI textComponent = textObject.GetComponent<TextMeshProUGUI>();
@@ -166,7 +151,7 @@ namespace BBPC.Patches
             {
                 TextLocalizer localizer = textObject.GetComponent<TextLocalizer>() ?? textObject.AddComponent<TextLocalizer>();
                 localizer.key = key;
-                
+
                 localizer.RefreshLocalization();
             }
         }
@@ -176,15 +161,15 @@ namespace BBPC.Patches
     {
         private int frameCounter = 0;
         private readonly int framesToWait = 2;
-        
+
         private void Update()
         {
             frameCounter++;
-            
+
             if (frameCounter > framesToWait)
             {
                 CreditsPatch.ApplyLocalizationToCredits();
-                Destroy(gameObject);
+                Destroy(this);
             }
         }
     }

@@ -2,6 +2,8 @@ using System;
 using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
+using BBPC.API;
+using Logger = BBPC.API.Logger;
 
 namespace BBPC
 {
@@ -34,9 +36,12 @@ namespace BBPC
         {
             if (textComponent != null && !string.IsNullOrEmpty(key) && Singleton<LocalizationManager>.Instance != null)
             {
+                Logger.Debug("Applying translation to " + textComponent.name);
                 if (Singleton<LocalizationManager>.Instance.HasKey(key))
                 {
+                    Logger.Debug("Key " + key + " found! Applying translation.");
                     string localizedText = Singleton<LocalizationManager>.Instance.GetLocalizedText(key);
+                    Logger.Debug("Get localized text of key " + key + ": "+localizedText);
                     if (!string.IsNullOrEmpty(localizedText) && textComponent.text != localizedText)
                     {
                         if (localizedText.Contains("{0}") && replaces.Count > 0)
@@ -47,6 +52,7 @@ namespace BBPC
                         return localizedText;
                     }
                 }
+                Logger.Warning("Failed to find translation or text for key " + key + " or the default text is same as localized text, returning fallback value:" + textComponent.text + ".");
                 return textComponent.text;
             }
             return null;

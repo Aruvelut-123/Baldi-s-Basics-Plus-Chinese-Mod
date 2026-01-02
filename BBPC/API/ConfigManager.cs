@@ -133,7 +133,7 @@ namespace BBPC.API
                 ConfigManager.currect_lang.Value = current;
                 need_restart = true;
             }
-            ConfigManager.show_watermark.Value = toggleWatermarkButton.Value;
+            if (toggleWatermarkButton != null) ConfigManager.show_watermark.Value = toggleWatermarkButton.Value;
             if (!need_restart) Plugin.update_watermark();
             if (need_restart) Application.Quit();
         }

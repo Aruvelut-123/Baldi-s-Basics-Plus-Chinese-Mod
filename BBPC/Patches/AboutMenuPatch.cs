@@ -173,7 +173,6 @@ namespace BBPC
                         targetTransform.GetComponent<WebsiteOpener>().url = "https://github.com/Aruvelut-123/Baldi-s-Basics-Plus-Chinese-Mod/issues";
                         targetTransform.gameObject.SetActive(true);
                     }
-                    if (BBPCTemp.is_eng) continue;
                     TextMeshProUGUI textComponent = targetTransform.GetComponent<TextMeshProUGUI>();
                     if (textComponent != null)
                     {

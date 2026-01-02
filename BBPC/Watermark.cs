@@ -18,7 +18,7 @@ namespace BBPC
         {
             plugin = plug;
             create_watermark(is_dev, is_alpha, is_beta);
-            if (ConfigManager.show_watermark.Value) { canvas.SetActive(false); watermarkGO.SetActive(false); }
+            if (ConfigManager.show_watermark.Value && canvas != null && watermarkGO != null) { canvas.SetActive(false); watermarkGO.SetActive(false); }
         }
 
         public void update_watermark(bool is_dev, bool is_alpha, bool is_beta)
@@ -42,8 +42,8 @@ namespace BBPC
                 {
                     watermarkGO.GetComponent<TextMeshProUGUI>().text = "";
                 }
-                if (ConfigManager.show_watermark.Value) { canvas.SetActive(false); watermarkGO.SetActive(false); }
-                else { watermarkGO.SetActive(true); canvas.SetActive(true); }
+                if (ConfigManager.show_watermark.Value && canvas != null) { canvas.SetActive(false); watermarkGO.SetActive(false); }
+                else if (canvas != null) { watermarkGO.SetActive(true); canvas.SetActive(true); }
             }
         }
 
@@ -64,7 +64,7 @@ namespace BBPC
         {
             create_canvas();
             watermarkGO = new GameObject("DevWatermark");
-            watermarkGO.transform.SetParent(canvas.transform, false);
+            if (canvas != null) watermarkGO.transform.SetParent(canvas.transform, false);
             TextMeshProUGUI watermarkText = watermarkGO.AddComponent<TextMeshProUGUI>();
             if (is_dev)
             {
@@ -82,7 +82,7 @@ namespace BBPC
             watermarkText.color = Color.red;
             watermarkText.alignment = TextAlignmentOptions.BottomRight;
             RectTransform rt = watermarkGO.GetComponent<RectTransform>();
-            rt.SetParent(canvas.transform, false);
+            if (canvas != null) rt.SetParent(canvas.transform, false);
             rt.anchorMin = new Vector2(1, 0);
             rt.anchorMax = new Vector2(1, 0);
             rt.pivot = new Vector2(1, 0);

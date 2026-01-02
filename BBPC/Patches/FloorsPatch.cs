@@ -45,7 +45,7 @@ namespace BBPC.Patches
         {
             if (!BBPCTemp.is_eng)
             {
-                if (Chainloader.PluginInfos.ContainsKey("com.pixelguy.bbtimes"))
+                if (Chainloader.PluginInfos.ContainsKey("pixelguy.pixelmodding.baldiplus.bbextracontent"))
                 {
                     try
                     {
