@@ -17,7 +17,7 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
-   - name: Upload binary and signature to Release
+    - name: Upload binary and signature to Release
       uses: softprops/action-gh-release@v2.2.2
       with:
         files: |
@@ -25,7 +25,6 @@ jobs:
   changelog:
     runs-on: ubuntu-latest
     continue-on-error: true
-    if: ${{ !github.event.release.prerelease }}
     steps:
       - name: Checkout all
         uses: actions/checkout@v4
