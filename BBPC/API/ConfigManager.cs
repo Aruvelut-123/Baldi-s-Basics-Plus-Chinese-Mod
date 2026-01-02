@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace BBPC.API
 {
@@ -110,6 +111,9 @@ namespace BBPC.API
             nextButton.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
             if (ConfigManager.is_beta.Value || ConfigManager.is_alpha.Value || ConfigManager.is_dev.Value) toggleWatermarkButton = CreateToggle("WatermarkToggleButton", Plugin.Instance.GetTranslationKey("BBPC_ToggleWatermark", "Disable Watermark"), ConfigManager.show_watermark.Value, new Vector2(50, -75), 250);
             StandardMenuButton applyButton = CreateApplyButton(() => { refresh_localization(); });
+            applyButton.transitionOnPress = true;
+            applyButton.transitionTime = 0.0167f;
+            applyButton.transitionType = UiTransition.Dither;
             AddTooltip(applyButton, Plugin.Instance.GetTranslationKey("BPPC_Apply_Tooltip", "Apply and restart"));
             CurrectLanguage.gameObject.SetActive(true);
         }
@@ -134,7 +138,11 @@ namespace BBPC.API
                 need_restart = true;
             }
             if (toggleWatermarkButton != null) ConfigManager.show_watermark.Value = toggleWatermarkButton.Value;
-            if (!need_restart) Plugin.update_watermark();
+            if (!need_restart)
+            {
+                Plugin.update_watermark();
+
+            }
             if (need_restart) Application.Quit();
         }
 
