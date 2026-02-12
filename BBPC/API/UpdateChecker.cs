@@ -27,10 +27,10 @@ namespace BBPC.API
             LatestVersionString = string.Empty;
             CurrentVersionString = BBPCTemp.ModVersion;
 
+            // temporary remove update checking
+            return
             try
             {
-                // temporary remove update checking
-                return
                 using (HttpClient client = new HttpClient())
                 {
                     client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("BBPCUpdateChecker", "1.0"));
