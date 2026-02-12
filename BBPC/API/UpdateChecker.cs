@@ -29,6 +29,8 @@ namespace BBPC.API
 
             try
             {
+                // temporary remove update checking
+                return
                 using (HttpClient client = new HttpClient())
                 {
                     client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("BBPCUpdateChecker", "1.0"));
