@@ -65,6 +65,7 @@ namespace BBPC.API
         public List<string> languages = [];
         public TextMeshProUGUI LangTip = null!;
         public TextMeshProUGUI CurrectLanguage = null!;
+        public TextMeshProUGUI LangNotice = null!;
         private int index;
         private StandardMenuButton previousButton = null!;
         private StandardMenuButton nextButton = null!;
