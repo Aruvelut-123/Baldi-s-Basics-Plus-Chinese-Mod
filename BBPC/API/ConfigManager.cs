@@ -111,7 +111,7 @@ namespace BBPC.API
             nextButton.OnPress.AddListener(() => changeLang(true));
             nextButton.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
             if (ConfigManager.is_beta.Value || ConfigManager.is_alpha.Value || ConfigManager.is_dev.Value) toggleWatermarkButton = CreateToggle("WatermarkToggleButton", Plugin.Instance.GetTranslationKey("BBPC_ToggleWatermark", "Disable Watermark"), ConfigManager.show_watermark.Value, new Vector2(50, -75), 250);
-            LangNotice = CreateText("LangNotice", Plugin.Instance.GetTranslationKey("BBPC_LangNotice", "test"), new Vector2(0, 50), BaldiFonts.ComicSans24, TextAlignmentOptions.Center, new Vector2(50, 10), Color.red);
+            LangNotice = CreateText("LangNotice", Plugin.Instance.GetTranslationKey("BBPC_LangNotice", "test"), new Vector2(0, -30), BaldiFonts.ComicSans24, TextAlignmentOptions.Center, new Vector2(50, 10), Color.red);
             StandardMenuButton applyButton = CreateApplyButton(() => { refresh_localization(); });
             applyButton.transitionOnPress = true;
             applyButton.transitionTime = 0.0167f;
