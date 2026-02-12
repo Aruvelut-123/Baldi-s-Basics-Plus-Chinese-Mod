@@ -27,8 +27,6 @@ namespace BBPC.API
             LatestVersionString = string.Empty;
             CurrentVersionString = BBPCTemp.ModVersion;
 
-            // temporary remove update checking
-            return
             try
             {
                 using (HttpClient client = new HttpClient())
@@ -62,7 +60,7 @@ namespace BBPC.API
                                     if (latestGitHubVersion > currentModVersion)
                                     {
                                         Logger.Warning($"模组有新版本可用: {latestVersionTag}! 当前版本: v{CurrentVersionString}");
-                                        IsUpdateAvailable = true;
+                                        //IsUpdateAvailable = true;
                                         LatestVersionString = latestVersionTag;
                                     }
                                     else
