@@ -206,12 +206,6 @@ namespace BBPC
             API.Logger.Info("资源加载完成！");
         }
 
-        public static void update_watermark()
-        {
-            API.Logger.Debug("Try to update watermark");
-            Plugin.Instance.watermarkGO.update_watermark(ConfigManager.is_dev.Value, ConfigManager.is_alpha.Value, ConfigManager.is_beta.Value);
-        }
-
         public void ApplyMenuTextures()
         {
             if (!ConfigManager.AreTexturesEnabled()) return;
