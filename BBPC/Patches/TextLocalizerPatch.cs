@@ -44,9 +44,13 @@ namespace BBPC
                     Logger.Debug("Get localized text of key " + key + ": "+localizedText);
                     if (!string.IsNullOrEmpty(localizedText) && textComponent.text != localizedText)
                     {
-                        if (localizedText.Contains("{0}") && replaces.Count > 0)
+                        if (replaces.Count > 0)
                         {
-                            localizedText = localizedText.Replace("{0}", replaces[0]);
+                            int i = 0;
+                            foreach (String replace in replaces)
+                            {
+                                localizedText = localizedText.Replace("{"+str(i)+"}", replaces[i]);
+                            }
                         }
                         textComponent.text = localizedText;
                         return localizedText;

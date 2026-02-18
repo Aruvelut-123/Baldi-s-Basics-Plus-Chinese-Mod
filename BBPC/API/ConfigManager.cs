@@ -69,7 +69,7 @@ namespace BBPC.API
         private int index;
         private StandardMenuButton previousButton = null!;
         private StandardMenuButton nextButton = null!;
-        private MenuToggle toggleWatermarkButton = null!;
+        private MenuToggle toggleTextureReplace = null!;
         private string current = null!;
 
         public override void Build()
@@ -110,8 +110,7 @@ namespace BBPC.API
             nextButton.OnPress = new UnityEngine.Events.UnityEvent();
             nextButton.OnPress.AddListener(() => changeLang(true));
             nextButton.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
-            if (ConfigManager.is_beta.Value || ConfigManager.is_alpha.Value || ConfigManager.is_dev.Value) toggleWatermarkButton = CreateToggle("WatermarkToggleButton", Plugin.Instance.GetTranslationKey("BBPC_ToggleWatermark", "Disable Watermark"), ConfigManager.show_watermark.Value, new Vector2(50, -75), 250);
-            LangNotice = CreateText("LangNotice", Plugin.Instance.GetTranslationKey("BBPC_LangNotice", ""), new Vector2(0, -75), BaldiFonts.ComicSans24, TextAlignmentOptions.Center, new Vector2(480, 60), Color.red);
+            toggleTextureReplace = CreateToggle("TextureToggleButton", Plugin.Instance.GetTranslationKey("BBPC_ToggleTexture", "Enable Texture Replacement"), ConfigManager.EnableTextures.Value, new Vector2(50, -75), 250);
             StandardMenuButton applyButton = CreateApplyButton(() => { refresh_localization(); });
             applyButton.transitionOnPress = true;
             applyButton.transitionTime = 0.0167f;
@@ -128,6 +127,8 @@ namespace BBPC.API
             if (index >= languages.Count) index = 0;
             current = languages[index];
             CurrectLanguage.text = Plugin.Instance.GetTranslationKey("BBPC_LangName", current, current, true);
+            if (CurrectLanguage.text == "繁體中文") AddTooltip(CurrectLanguage, Plugin.Instance.GetTranslationKey("BPPC_Apply_Tooltip", current, current, true));
+            else AddTooltip(CurrectLanguage, "");
             API.Logger.Debug("index: " + index.ToString() + "\ncurrent: " + current + "\nlanguages[index]: " + languages[index] + "\nCurrectLanguage.text: " + CurrectLanguage.text);
         }
 
@@ -139,11 +140,14 @@ namespace BBPC.API
                 ConfigManager.currect_lang.Value = current;
                 need_restart = true;
             }
-            if (toggleWatermarkButton != null) ConfigManager.show_watermark.Value = toggleWatermarkButton.Value;
+            if (ConfigManager.EnableTextures.Value != toggleTextureReplace.Value)
+            {
+                ConfigManager.EnableTextures.Value = toggleTextureReplace.Value;
+                need_restart = true;
+            }
             if (!need_restart)
             {
                 Plugin.update_watermark();
-
             }
             if (need_restart) Application.Quit();
         }
