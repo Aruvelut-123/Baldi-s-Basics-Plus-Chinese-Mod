@@ -169,7 +169,6 @@ namespace BBPC.Patches
                 
                 localizer.key = "BBPC_Menu_ModInfo";
                 localizer.RefreshLocalization();
-                localizer.replaces.Add(BBPCTemp.ModVersion);
 
                 StandardMenuButton button = textComponent.gameObject.ConvertToButton<StandardMenuButton>(true);
                 button.underlineOnHigh = true;
