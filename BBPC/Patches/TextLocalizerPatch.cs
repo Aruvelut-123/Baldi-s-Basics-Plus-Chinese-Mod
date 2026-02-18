@@ -10,7 +10,6 @@ namespace BBPC
     public class TextLocalizer : MonoBehaviour
     {
         public string key = null!;
-        public List<String> replaces = [];
         private TextMeshProUGUI textComponent = null!;
         private bool initialized = false;
         
@@ -44,10 +43,6 @@ namespace BBPC
                     Logger.Debug("Get localized text of key " + key + ": "+localizedText);
                     if (!string.IsNullOrEmpty(localizedText) && textComponent.text != localizedText)
                     {
-                        if (localizedText.Contains("{0}") && replaces.Count > 0)
-                        {
-                            localizedText = localizedText.Replace("{0}", replaces[0]);
-                        }
                         textComponent.text = localizedText;
                         return localizedText;
                     }

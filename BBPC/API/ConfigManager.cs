@@ -21,7 +21,6 @@ namespace BBPC.API
         public static ConfigEntry<bool> is_dev { get; private set; } = null!;
         public static ConfigEntry<bool> is_beta { get; private set; } = null!;
         public static ConfigEntry<bool> is_alpha { get; private set; } = null!;
-        public static ConfigEntry<string> version { get; private set; } = null!;
         public static ConfigEntry<string> currect_lang { get; set; } = null!;
         public static ConfigEntry<bool> show_watermark { get; private set; } = null!;
 
@@ -34,7 +33,6 @@ namespace BBPC.API
             is_dev = plugin.Config.Bind("Build Check", "is_dev", false, "Check this if is dev build.");
             is_beta = plugin.Config.Bind("Build Check", "is_beta", false, "Check this if is beta build.");
             is_alpha = plugin.Config.Bind("Build Check", "is_alpha", false, "Check this if is alpha build.");
-            version = plugin.Config.Bind("General", "version", "Dev Build", "Version number that displays in game.");
             EnableTextures = plugin.Config.Bind("General", "Enable Textures", true, "Enable or disable texture replacement.");
             EnableLogging = plugin.Config.Bind("General", "Enable Logging", false, "Enable or disable logging.");
             EnableDevMode = plugin.Config.Bind("Development", "Enable Dev Mode", false, "Enable development mode (scans and exports new posters). DISABLE FOR RELEASE!");
