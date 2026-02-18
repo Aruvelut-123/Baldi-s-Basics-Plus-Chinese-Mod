@@ -127,8 +127,16 @@ namespace BBPC.API
             if (index >= languages.Count) index = 0;
             current = languages[index];
             CurrectLanguage.text = Plugin.Instance.GetTranslationKey("BBPC_LangName", current, current, true);
-            if (CurrectLanguage.text == "繁體中文") AddTooltip(CurrectLanguage, Plugin.Instance.GetTranslationKey("BPPC_Apply_Tooltip", current, current, true));
-            else AddTooltip(CurrectLanguage, "");
+            if (CurrectLanguage.text == "繁體中文")
+            {
+                AddTooltip(nextButton, Plugin.Instance.GetTranslationKey("BPPC_Apply_Tooltip", current, current, true));
+                AddTooltip(previousButton, Plugin.Instance.GetTranslationKey("BPPC_Apply_Tooltip", current, current, true));
+            }
+            else
+            {
+                AddTooltip(nextButton, "");
+                AddTooltip(previousButton, "");
+            }
             API.Logger.Debug("index: " + index.ToString() + "\ncurrent: " + current + "\nlanguages[index]: " + languages[index] + "\nCurrectLanguage.text: " + CurrectLanguage.text);
         }
 

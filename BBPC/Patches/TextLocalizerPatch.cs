@@ -49,7 +49,7 @@ namespace BBPC
                             int i = 0;
                             foreach (String replace in replaces)
                             {
-                                localizedText = localizedText.Replace("{"+str(i)+"}", replaces[i]);
+                                localizedText = localizedText.Replace("{"+i.ToString()+"}", replaces[i]);
                             }
                         }
                         textComponent.text = localizedText;
