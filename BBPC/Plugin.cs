@@ -55,7 +55,6 @@ namespace BBPC
             "Play_Lit", "Play_Unlit",
             "TempMenu_Low"
         };
-        private Watermark watermarkGO { get; set; } = null!;
 
         private void Awake()
         {
@@ -63,21 +62,12 @@ namespace BBPC
             API.Logger.Init(Logger);
             ConfigManager.Initialize(this, Logger);
 
-            watermarkGO = new Watermark(ConfigManager.is_dev.Value, ConfigManager.is_alpha.Value, ConfigManager.is_beta.Value, this);
-
             API.Logger.Info($"插件 {BBPCTemp.ModName} 正在初始化...");
             API.Logger.Info($"纹理: {(ConfigManager.AreTexturesEnabled() ? "启用" : "禁用")}, " +
                            $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}" +
                            $"开发模式: {(ConfigManager.IsDevModeEnabled() ? "启用" : "禁用")}");
 
             new Harmony(BBPCTemp.ModGUID).PatchAllConditionals();
-
-            ConfigManager.is_alpha.Value = false;
-            ConfigManager.is_beta.Value = false;
-            ConfigManager.is_dev.Value = false;
-            if (ConfigManager.version.Value.Contains("Dev")) ConfigManager.is_dev.Value = true;
-            else if (ConfigManager.version.Value.Contains("Beta")) ConfigManager.is_beta.Value = true;
-            else if (ConfigManager.version.Value.Contains("Alpha")) ConfigManager.is_alpha.Value = true;
 
             VersionCheck.CheckGameVersion(expectedGameVersions, Info);
 
