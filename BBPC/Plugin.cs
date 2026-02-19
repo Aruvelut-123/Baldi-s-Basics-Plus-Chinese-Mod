@@ -31,7 +31,7 @@ namespace BBPC.ExtensionTemplate
 
             harmony.PatchAllConditionals();
 
-            API.Logger.Info($"Mod {MyPluginInfo.PLUGIN_NAME} is loaded!");
+            API.Logger.Info($"Mod {API.BBPCTemp.ModName} is loaded!");
         }
 
         void OnDestroy()
