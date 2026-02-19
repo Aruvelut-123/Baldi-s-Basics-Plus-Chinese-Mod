@@ -1,4 +1,5 @@
 ﻿using BBPC.API;
+using BBPC.MTMAPIPatches;
 using BepInEx;
 using HarmonyLib;
 using MTM101BaldAPI;
@@ -67,7 +68,11 @@ namespace BBPC
                            $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}" +
                            $"开发模式: {(ConfigManager.IsDevModeEnabled() ? "启用" : "禁用")}");
 
-            new Harmony(BBPCTemp.ModGUID).PatchAllConditionals();
+            Harmony harmony = new Harmony(BBPCTemp.ModGUID);
+
+            MainLoadTranspiler.Apply(harmony);
+
+            harmony.PatchAllConditionals();
 
             VersionCheck.CheckGameVersion(expectedGameVersions, Info);
 
