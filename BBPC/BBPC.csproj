@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
-    <AssemblyName>BBPC</AssemblyName>
-    <Product>Baldi's Basics Plus Chinese Pack Support</Product>
+    <AssemblyName>BBPC.EditorExtension</AssemblyName>
+    <Product>Baldi's Basics Plus Chinese Pack Support - LevelEditor Extension</Product>
     <Version>1.0.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
@@ -12,7 +12,7 @@
       https://nuget.bepinex.dev/v3/index.json;
       https://nuget.samboy.dev/v3/index.json
     </RestoreAdditionalProjectSources>
-    <RootNamespace>BBPC</RootNamespace>
+    <RootNamespace>BBPC.EditorExtension</RootNamespace>
     <Nullable>enable</Nullable>
     <BaseOutputPath>Build\</BaseOutputPath>
     <Authors>Baymaxawa</Authors>
@@ -50,6 +50,9 @@
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\Dlls\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="BBPC">
+      <HintPath>..\Dlls\BBPC.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx">
       <HintPath>..\Dlls\BepInEx.dll</HintPath>

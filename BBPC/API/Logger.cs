@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace BBPC.API
+namespace BBPC.EditorExtension.API
 {
     public static class Logger
     {

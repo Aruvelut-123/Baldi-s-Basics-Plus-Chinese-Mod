@@ -1,6 +1,6 @@
-﻿namespace BBPC.API
+﻿namespace BBPC.EditorExtension.API
 {
-    public static class BBPCTemp
+    public static class BBPCEETemp
     {
         public const string ModGUID = "com.baymaxawa.bbpc.leveleditorhelper";
         public const string ModName = "Baldi's Basics Plus Chinese Translation - Level Editor Extension";
