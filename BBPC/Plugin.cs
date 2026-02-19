@@ -1,12 +1,13 @@
 ﻿using BBPC.API;
+using BBPC.PineDebugExtension.API;
 using BepInEx;
 using HarmonyLib;
 using MTM101BaldAPI;
 using UnityEngine;
 
-namespace BBPC.ExtensionTemplate
+namespace BBPC.PineDebugExtension
 {
-    [BepInPlugin(API.BBPCTemp.ModGUID, API.BBPCTemp.ModName, API.BBPCTemp.ModVersion)]
+    [BepInPlugin(BBPCPDTemp.ModGUID, BBPCPDTemp.ModName, BBPCPDTemp.ModVersion)]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency("com.baymaxawa.bbpc", BepInDependency.DependencyFlags.HardDependency)]
     [BepInProcess("BALDI.exe")]
@@ -22,16 +23,16 @@ namespace BBPC.ExtensionTemplate
             Instance = this;
             API.Logger.Init(Logger);
 
-            API.Logger.Info($"插件 {API.BBPCTemp.ModName} 正在初始化...");
+            API.Logger.Info($"插件 {BBPCPDTemp.ModName} 正在初始化...");
 
             is_english = BBPC.API.BBPCTemp.is_eng;
             current_lang = ConfigManager.currect_lang.Value;
 
-            Harmony harmony = new Harmony(API.BBPCTemp.ModGUID);
+            Harmony harmony = new Harmony(BBPCPDTemp.ModGUID);
 
             harmony.PatchAllConditionals();
 
-            API.Logger.Info($"Mod {API.BBPCTemp.ModName} is loaded!");
+            API.Logger.Info($"Mod {BBPCPDTemp.ModName} is loaded!");
         }
 
         void OnDestroy()
