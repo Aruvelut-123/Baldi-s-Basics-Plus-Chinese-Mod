@@ -2,9 +2,9 @@ name: Build for pushes and PR
 
 on:
   push:
-    branches: [ "feat/template" ]
+    branches: [ "feat/ModManager" ]
   pull_request:
-    branches: [ "feat/template" ]
+    branches: [ "feat/ModManager" ]
   workflow_dispatch:
 
 jobs:

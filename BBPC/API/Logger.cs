@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace BBPC.ExtensionTemplate.API
+namespace BBPC.ModManagerExtension.API
 {
     public static class Logger
     {
