@@ -2,9 +2,9 @@ name: Build for pushes and PR
 
 on:
   push:
-    branches: [ "feat/pluslevelstudio" ]
+    branches: [ "feat/template" ]
   pull_request:
-    branches: [ "feat/pluslevelstudio" ]
+    branches: [ "feat/template" ]
   workflow_dispatch:
 
 jobs:

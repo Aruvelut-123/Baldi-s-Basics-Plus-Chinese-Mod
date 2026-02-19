@@ -1,18 +1,14 @@
 ﻿using BBPC.API;
-using BBPC.EditorExtension.API;
-using BBPC.EditorExtension.Patches;
 using BepInEx;
 using HarmonyLib;
 using MTM101BaldAPI;
 using UnityEngine;
 
-namespace BBPC.EditorExtension
+namespace BBPC.ExtensionTemplate
 {
-    [BepInPlugin(BBPCEETemp.ModGUID, BBPCEETemp.ModName, BBPCEETemp.ModVersion)]
+    [BepInPlugin(API.BBPCTemp.ModGUID, API.BBPCTemp.ModName, API.BBPCTemp.ModVersion)]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency("com.baymaxawa.bbpc", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.HardDependency)]
     [BepInProcess("BALDI.exe")]
     public class Plugin : BaseUnityPlugin
     {
@@ -26,12 +22,12 @@ namespace BBPC.EditorExtension
             Instance = this;
             API.Logger.Init(Logger);
 
-            API.Logger.Info($"插件 {BBPCEETemp.ModName} 正在初始化...");
+            API.Logger.Info($"插件 {API.BBPCTemp.ModName} 正在初始化...");
 
-            is_english = BBPCTemp.is_eng;
+            is_english = BBPC.API.BBPCTemp.is_eng;
             current_lang = ConfigManager.currect_lang.Value;
 
-            Harmony harmony = new Harmony(BBPCEETemp.ModGUID);
+            Harmony harmony = new Harmony(API.BBPCTemp.ModGUID);
 
             harmony.PatchAllConditionals();
 
