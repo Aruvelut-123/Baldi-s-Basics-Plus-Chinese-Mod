@@ -143,10 +143,6 @@ namespace BBPC.API
                 ConfigManager.EnableTextures.Value = toggleTextureReplace.Value;
                 need_restart = true;
             }
-            if (!need_restart)
-            {
-                Plugin.update_watermark();
-            }
             if (need_restart) Application.Quit();
         }
 
