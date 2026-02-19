@@ -103,7 +103,7 @@ namespace BBPC.Patches
         private static class TransformGetChildPatch
         {
             [HarmonyPostfix]
-            private static void Postfix(Transform __result)
+            private static void Postfix(ref Transform __result)
             {
                 if (__result != null && __result.name == "Reminder")
                 {

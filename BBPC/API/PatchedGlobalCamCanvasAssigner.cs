@@ -11,8 +11,11 @@ namespace BBPC.API
 
         private void Awake()
         {
-            canvas.worldCamera = Singleton<GlobalCam>.Instance.Cam;
-            canvas.planeDistance = planeDistance;
+            if (canvas != null)
+            {
+                canvas.worldCamera = Singleton<GlobalCam>.Instance.Cam;
+                canvas.planeDistance = planeDistance;
+            }
         }
     }
 }

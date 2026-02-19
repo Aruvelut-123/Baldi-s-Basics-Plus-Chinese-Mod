@@ -268,10 +268,11 @@ namespace BBPC.Patches
             {
                 localizationKey = buttonName;
             }
-
-            localizer.key = localizationKey;
-            localizer.RefreshLocalization();
-            
+            if (localizationKey != null)
+            {
+                localizer.key = localizationKey;
+                localizer.RefreshLocalization();
+            }
             StandardMenuButton button = buttonObj.ConvertToButton<StandardMenuButton>(true);
             button.underlineOnHigh = true;
             

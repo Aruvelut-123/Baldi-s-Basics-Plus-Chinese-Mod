@@ -102,7 +102,8 @@ namespace BBPC
                     if (node.Type == JTokenType.String || node.Type == JTokenType.Integer || node.Type == JTokenType.Float)
                     {
                         //返回string值
-                        result = node.Value<object>().ToString();
+                        object? value = node.Value<object>();
+                        if (value != null) result = value.ToString();
                     }
                 }
                 return result;
@@ -136,6 +137,7 @@ namespace BBPC
                         StreamReader file = File.OpenText(json_file_path);
                         JsonTextReader reader = new JsonTextReader(file);
                         JToken lang_json = (JObject)JToken.ReadFrom(reader);
+#pragma warning disable CS8602 // 解引用可能出现空引用。
                         foreach (JToken item in lang_json["items"])
                         {
                             if (item["key"].ToString() == key)
@@ -143,6 +145,7 @@ namespace BBPC
                                 return item["value"].ToString();
                             }
                         }
+#pragma warning restore CS8602 // 解引用可能出现空引用。
                         file.Close();
                     }
                 }
