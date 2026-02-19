@@ -2,10 +2,8 @@
 {
     public static class BBPCTemp
     {
-        public const string ModGUID = "com.baymaxawa.bbpc";
-        public const string ModName = "Baldi's Basics Plus Chinese Translation";
-        public const string ModVersion = "1.2.1.2";
-        public static bool is_eng = false;
-        public static string PostersFile = "PosterSettings.json";
+        public const string ModGUID = "com.baymaxawa.bbpc.leveleditorhelper";
+        public const string ModName = "Baldi's Basics Plus Chinese Translation - Level Editor Extension";
+        public const string ModVersion = "1.0.0.0";
     }
 }

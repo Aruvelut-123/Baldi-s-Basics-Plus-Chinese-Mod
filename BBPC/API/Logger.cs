@@ -84,9 +84,7 @@ namespace BBPC.API
 
         private static bool IsLoggingEnabled()
         {
-            if (ConfigManager.EnableLogging == null) return true;
-            
-            return ConfigManager.IsLoggingEnabled();
+            return true;
         }
     }
 } 
