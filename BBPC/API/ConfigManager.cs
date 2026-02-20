@@ -4,6 +4,7 @@ using BepInEx.Logging;
 using MTM101BaldAPI.AssetTools;
 using MTM101BaldAPI.OptionsAPI;
 using MTM101BaldAPI.UI;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -57,8 +58,6 @@ namespace BBPC.API
         public TextMeshProUGUI CurrectLanguage = null!;
         public TextMeshProUGUI LangNotice = null!;
         private int index;
-        private StandardMenuButton previousButton = null!;
-        private StandardMenuButton nextButton = null!;
         private MenuToggle toggleTextureReplace = null!;
         private string current = null!;
 
@@ -92,19 +91,25 @@ namespace BBPC.API
             localizer.key = "BBPC_LangTip";
             localizer.RefreshLocalization();
             CurrectLanguage = CreateText("CurrectLanguage", Plugin.Instance.GetTranslationKey("BBPC_LangName", current), new Vector2(0, 30), BaldiFonts.ComicSans24, TextAlignmentOptions.Center, new Vector2(50, 10), Color.black);
-            previousButton = Plugin.CreateButtonWithSprite("PreviousButton", Plugin.LoadAsset<Sprite>("MenuArrowSheet_2"), Plugin.LoadAsset<Sprite>("MenuArrowSheet_0"), transform, new Vector3(-150, 30));
+            StandardMenuButton previousButton = Plugin.CreateButtonWithSprite("PreviousButton", Plugin.LoadAsset<Sprite>("MenuArrowSheet_2"), Plugin.LoadAsset<Sprite>("MenuArrowSheet_0"), transform, new Vector3(-150, 30));
             previousButton.OnPress = new UnityEngine.Events.UnityEvent();
             previousButton.OnPress.AddListener(() => changeLang(false));
             previousButton.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
-            nextButton = Plugin.CreateButtonWithSprite("NextButton", Plugin.LoadAsset<Sprite>("MenuArrowSheet_3"), Plugin.LoadAsset<Sprite>("MenuArrowSheet_1"), transform, new Vector3(150, 30));
+            StandardMenuButton nextButton = Plugin.CreateButtonWithSprite("NextButton", Plugin.LoadAsset<Sprite>("MenuArrowSheet_3"), Plugin.LoadAsset<Sprite>("MenuArrowSheet_1"), transform, new Vector3(150, 30));
             nextButton.OnPress = new UnityEngine.Events.UnityEvent();
             nextButton.OnPress.AddListener(() => changeLang(true));
             nextButton.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
+            string langNotice = Plugin.Instance.GetTranslationKey("BBPC_LangNotice", "注意：繁体中文目前仍然处于测试阶段\n如遇到问题请提出！");
+            try
+            {
+                AddTooltip(previousButton, langNotice);
+                AddTooltip(nextButton, langNotice);
+            } catch (NullReferenceException e)
+            {
+                API.Logger.Error("???????? A strange error has occured. Detail: " + e.Message);
+            }
             toggleTextureReplace = CreateToggle("TextureToggleButton", Plugin.Instance.GetTranslationKey("BBPC_ToggleTexture", "Enable Texture Replacement"), ConfigManager.EnableTextures.Value, new Vector2(50, -75), 250);
             StandardMenuButton applyButton = CreateApplyButton(() => { refresh_localization(); });
-            applyButton.transitionOnPress = true;
-            applyButton.transitionTime = 0.0167f;
-            applyButton.transitionType = UiTransition.Dither;
             AddTooltip(applyButton, Plugin.Instance.GetTranslationKey("BPPC_Apply_Tooltip", "Apply and restart"));
             CurrectLanguage.gameObject.SetActive(true);
         }
@@ -117,16 +122,6 @@ namespace BBPC.API
             if (index >= languages.Count) index = 0;
             current = languages[index];
             CurrectLanguage.text = Plugin.Instance.GetTranslationKey("BBPC_LangName", current, current, true);
-            if (CurrectLanguage.text == "繁體中文")
-            {
-                AddTooltip(nextButton, Plugin.Instance.GetTranslationKey("BBPC_LangNotice", "", current, true));
-                AddTooltip(previousButton, Plugin.Instance.GetTranslationKey("BBPC_LangNotice", "", current, true));
-            }
-            else
-            {
-                AddTooltip(nextButton, "");
-                AddTooltip(previousButton, "");
-            }
             API.Logger.Debug("index: " + index.ToString() + "\ncurrent: " + current + "\nlanguages[index]: " + languages[index] + "\nCurrectLanguage.text: " + CurrectLanguage.text);
         }
 

@@ -142,15 +142,28 @@ namespace BBPC
                         StreamReader file = File.OpenText(json_file_path);
                         JsonTextReader reader = new JsonTextReader(file);
                         JToken lang_json = (JObject)JToken.ReadFrom(reader);
-#pragma warning disable CS8602 // 解引用可能出现空引用。
+                        if (lang_json == null)
+                        {
+                            API.Logger.Error("Language File may corrpted! Path: " + json_file_path);
+                            return default_obj;
+                        }
+                        try
+                        {
+                            API.Logger.Debug(lang_json["items"].Values().ToString());
+                        } catch (NullReferenceException e)
+                        {
+                            API.Logger.Error("Language File may corrpted because it does not have items! Path: " + json_file_path);
+                            continue;
+                        }
                         foreach (JToken item in lang_json["items"])
                         {
                             if (item["key"].ToString() == key)
                             {
+                                API.Logger.Debug("Language File " + json_file_path + " contains " + key + " and the value is " + item["value"].ToString());
                                 return item["value"].ToString();
                             }
                         }
-#pragma warning restore CS8602 // 解引用可能出现空引用。
+                        API.Logger.Debug("Language File " + json_file_path + " doesn't contains " + key);
                         file.Close();
                     }
                 }
