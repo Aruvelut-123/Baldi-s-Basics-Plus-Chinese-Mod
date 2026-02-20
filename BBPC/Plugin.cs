@@ -4,11 +4,12 @@ using HarmonyLib;
 using MTM101BaldAPI;
 using UnityEngine;
 
-namespace BBPC.ExtensionTemplate
+namespace BBPC.ChallengeJarExtension
 {
-    [BepInPlugin(API.BBPCTemp.ModGUID, API.BBPCTemp.ModName, API.BBPCTemp.ModVersion)]
+    [BepInPlugin(API.BBPCCJTemp.ModGUID, API.BBPCCJTemp.ModName, API.BBPCCJTemp.ModVersion)]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency("com.baymaxawa.bbpc", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInDependency("bbplus.challengejar", BepInDependency.DependencyFlags.HardDependency)]
     [BepInProcess("BALDI.exe")]
     public class Plugin : BaseUnityPlugin
     {
@@ -22,16 +23,16 @@ namespace BBPC.ExtensionTemplate
             Instance = this;
             API.Logger.Init(Logger);
 
-            API.Logger.Info($"插件 {API.BBPCTemp.ModName} 正在初始化...");
+            API.Logger.Info($"插件 {API.BBPCCJTemp.ModName} 正在初始化...");
 
             is_english = BBPC.API.BBPCTemp.is_eng;
             current_lang = ConfigManager.currect_lang.Value;
 
-            Harmony harmony = new Harmony(API.BBPCTemp.ModGUID);
+            Harmony harmony = new Harmony(API.BBPCCJTemp.ModGUID);
 
             harmony.PatchAllConditionals();
 
-            API.Logger.Info($"Mod {API.BBPCTemp.ModName} is loaded!");
+            API.Logger.Info($"Mod {API.BBPCCJTemp.ModName} is loaded!");
         }
 
         void OnDestroy()

@@ -2,9 +2,9 @@ name: Build for pushes and PR
 
 on:
   push:
-    branches: [ "feat/template" ]
+    branches: [ "feat/challengejar" ]
   pull_request:
-    branches: [ "feat/template" ]
+    branches: [ "feat/challengejar" ]
   workflow_dispatch:
 
 jobs:
