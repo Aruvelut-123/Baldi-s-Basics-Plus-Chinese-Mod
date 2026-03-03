@@ -1,5 +1,6 @@
 ﻿using BBPC.API;
 using BBPC.MTMAPIPatches;
+using BBPC.Patches;
 using BepInEx;
 using HarmonyLib;
 using MTM101BaldAPI;
@@ -15,6 +16,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace BBPC
@@ -47,7 +49,7 @@ namespace BBPC
     {
         public static Plugin Instance { get; private set; } = null!;
         private Harmony? harmonyInstance = null!;
-        private string[] expectedGameVersions = ["0.13", "0.13.1"];
+        private string[] expectedGameVersions = ["0.14"];
 
         private static readonly string[] menuTextureNames =
         {
@@ -71,6 +73,8 @@ namespace BBPC
             Harmony harmony = new Harmony(BBPCTemp.ModGUID);
 
             MainLoadTranspiler.Apply(harmony);
+
+            new Credit(this);
 
             harmony.PatchAllConditionals();
 
@@ -374,11 +378,6 @@ namespace BBPC
                 harmonyInstance.UnpatchSelf();
                 harmonyInstance = null;
             }
-        }
-
-        public void des(GameObject obj)
-        {
-            Destroy(obj);
         }
     }
 }
