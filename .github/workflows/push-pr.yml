@@ -50,8 +50,15 @@ jobs:
         run: dotnet restore
       - name: Build
         run: dotnet build --no-restore
+      - name: Format branch name
+        uses: actions/github-script@v7
+        id: branch
+        with:
+          script: |
+            const branch = '${{ matrix.branch }}';
+            return branch.split('/').join('-');
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v6.0.0
         with:
-          name: BBPC-${{ join(split(matrix.branch, '/'), '-') }}.dll
+          name: BBPC-${{ steps.branch.outputs.result }}.dll
           path: ./BBPC/Build/Debug/BBPC.*.dll
