@@ -57,7 +57,7 @@ jobs:
           script: |
             const branch = '${{ matrix.branch }}';
             const safe =  branch.replace(/"/g, '').split('/').join('-');
-            const name = `BBPC-${safeBranch}.dll`;
+            const name = `BBPC-${safe}.dll`;
             console.log(name);
             return name;
       - name: Upload a Build Artifact
