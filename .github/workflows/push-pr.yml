@@ -20,6 +20,15 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
+    - name: Get UTC Date
+      id: get-date
+      shell: bash
+      run: echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
+    - name: Save BBPC.dll to cache (fresh every run)
+      uses: actions/cache/save@v5
+      with:
+        path: ./BBPC/Build/Debug/BBPC.dll
+        key: bbpc-dll-${{ runner.os }}-${{ steps.get-date.outputs.date }}
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v6.0.0
       with:
@@ -35,6 +44,7 @@ jobs:
         compression-level: 0
   build-extensions:
     runs-on: windows-latest
+    needs: build
     strategy:
       matrix:
         branch: [feat/challengejar, feat/template, feat/ModManager, feat/pluslevelstudio]
@@ -51,6 +61,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ matrix.branch }}
+      - name: Get UTC Date
+        id: get-date
+        shell: bash
+        run: echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
+      - name: Restore BBPC.dll from cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ./BBPC/Build/Debug/BBPC.dll
+          key: bbpc-dll-${{ runner.os }}-${{ steps.get-date.outputs.date }}
+          restore-keys: |
+            bbpc-dll-${{ runner.os }}-
+      - name: Copy BBPC.dll to Dlls folder for extension projects
+        run: |
+          cp ./BBPC/Build/Debug/BBPC.dll ./Dlls/BBPC.dll
+        shell: bash
+      - name: Verify copied DLL
+        run: dir .\Dlls\BBPC.dll
+        shell: cmd
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:

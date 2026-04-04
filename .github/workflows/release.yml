@@ -17,11 +17,13 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
-    - name: Upload binary and signature to Release
+    - name: Upload DLL and Dependencies to Release
       uses: softprops/action-gh-release@v2.2.2
       with:
         files: |
           ./BBPC/Build/Debug/BBPC.dll
+          ./Dlls/MonoMod.Backports.dll
+          ./Dlls/MonoMod.ILHelpers.dll
   changelog:
     runs-on: ubuntu-latest
     continue-on-error: true
