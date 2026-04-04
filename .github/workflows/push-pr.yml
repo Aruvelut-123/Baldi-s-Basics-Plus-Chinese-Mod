@@ -23,6 +23,7 @@ jobs:
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v6.0.0
       with:
+        name: BBPC.dll
         path: ./BBPC/Build/Debug/BBPC.dll
     - name: Upload Dependencies
       uses: actions/upload-artifact@v6.0.0
@@ -52,4 +53,5 @@ jobs:
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v6.0.0
         with:
+          name: BBPC-${{ join(split(matrix.branch, '/'), '-') }}.dll
           path: ./BBPC/Build/Debug/BBPC.*.dll
