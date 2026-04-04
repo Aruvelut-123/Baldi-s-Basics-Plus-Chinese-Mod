@@ -56,9 +56,10 @@ jobs:
         with:
           script: |
             const branch = '${{ matrix.branch }}';
-            return branch.replace(/"/g, '').split('/').join('-');
+            const safe =  branch.replace(/"/g, '').split('/').join('-');
+            return `BBPC-${safe}.dll`;
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v6.0.0
         with:
-          name: BBPC-${{ steps.branch.outputs.result }}.dll
+          name: ${{ steps.branch.outputs.result }}
           path: ./BBPC/Build/Debug/BBPC.*.dll
