@@ -37,7 +37,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        branch: ["feat/challengejar", "feat/template", "feat/ModManager", "feat/pluslevelstudio"]
+        branch: [feat/challengejar, feat/template, feat/ModManager, feat/pluslevelstudio]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -55,7 +55,7 @@ jobs:
         id: branch
         with:
           script: |
-            const branch = '${{ toJSON(matrix.branch) }}';
+            const branch = '${{ matrix.branch }}';
             return branch.split('/').join('-');
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v6.0.0
