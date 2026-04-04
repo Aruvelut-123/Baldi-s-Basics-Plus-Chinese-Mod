@@ -28,7 +28,9 @@ jobs:
       uses: actions/upload-artifact@v6.0.0
       with:
         name: Dependencies.zip
-        path: ./BBPC/Build/Debug/MonoMod.*.dll
+        path: |
+          ./Dlls/MonoMod.Backports.dll
+          ./Dlls/MonoMod.ILHelpers.dll
         compression-level: 0
   build-extensions:
     runs-on: windows-latest
