@@ -17,15 +17,15 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
-    - name: Get UTC Date
+    - name: Get Precise UTC Timestamp
       id: get-date
       shell: bash
-      run: echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
+      run: echo "timestamp=$(date -u +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
     - name: Save BBPC.dll to cache (fresh every run)
       uses: actions/cache/save@v5
       with:
         path: ./BBPC/Build/Debug/BBPC.dll
-        key: bbpc-release-dll-${{ runner.os }}-${{ steps.get-date.outputs.date }}
+        key: bbpc-release-dll-${{ runner.os }}-${{ steps.get-date.outputs.timestamp }}
     - name: Upload DLL and Dependencies to Release
       uses: softprops/action-gh-release@v2.2.2
       with:
@@ -74,15 +74,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ matrix.branch }}
-      - name: Get UTC Date
+      - name: Get Precise UTC Timestamp
         id: get-date
         shell: bash
-        run: echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
+        run: echo "timestamp=$(date -u +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
       - name: Restore BBPC.dll from cache
         uses: actions/cache/restore@v5
         with:
           path: ./BBPC/Build/Debug/BBPC.dll
-          key: bbpc-release-dll-${{ runner.os }}-${{ steps.get-date.outputs.date }}
+          key: bbpc-release-dll-${{ runner.os }}-${{ steps.get-date.outputs.timestamp }}
           restore-keys: |
             bbpc-release-dll-${{ runner.os }}-
       - name: Copy BBPC.dll to Dlls folder for extension projects
