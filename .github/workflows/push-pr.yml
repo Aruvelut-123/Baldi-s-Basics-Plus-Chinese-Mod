@@ -76,9 +76,35 @@ jobs:
         run: |
           cp ./BBPC/Build/Debug/BBPC.dll ./Dlls/BBPC.dll
         shell: bash
-      - name: Verify copied DLL
-        run: dir .\Dlls\BBPC.dll
-        shell: cmd
+      - name: Verify BBPC.dll hash matches (source vs copied)
+        shell: pwsh   # PowerShell (recommended on Windows runners)
+        run: |
+          $sourcePath = "./BBPC/Build/Debug/BBPC.dll"
+          $copiedPath = "./Dlls/BBPC.dll"
+
+          if (-Not (Test-Path $sourcePath)) {
+            Write-Error "Source BBPC.dll not found at $sourcePath"
+            exit 1
+          }
+
+          if (-Not (Test-Path $copiedPath)) {
+            Write-Error "Copied BBPC.dll not found at $copiedPath"
+            exit 1
+          }
+
+          $sourceHash = (Get-FileHash $sourcePath -Algorithm SHA256).Hash
+          $copiedHash = (Get-FileHash $copiedPath -Algorithm SHA256).Hash
+
+          Write-Host "Source BBPC.dll hash: $sourceHash"
+          Write-Host "Copied BBPC.dll hash: $copiedHash"
+
+          if ($sourceHash -ne $copiedHash) {
+            Write-Error "ERROR: Hash mismatch! The copied BBPC.dll does not match the source."
+            Write-Error "This usually means the copy operation failed or the file was corrupted."
+            exit 1
+          }
+
+          Write-Host "✅ Success: Both BBPC.dll files have matching hashes."
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
