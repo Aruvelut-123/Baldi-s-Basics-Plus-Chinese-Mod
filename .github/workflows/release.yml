@@ -17,6 +17,15 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
+    - name: Get UTC Date
+      id: get-date
+      shell: bash
+      run: echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
+    - name: Save BBPC.dll to cache (fresh every run)
+      uses: actions/cache/save@v5
+      with:
+        path: ./BBPC/Build/Debug/BBPC.dll
+        key: bbpc-release-dll-${{ runner.os }}-${{ steps.get-date.outputs.date }}
     - name: Upload DLL and Dependencies to Release
       uses: softprops/action-gh-release@v2.2.2
       with:
@@ -46,3 +55,78 @@ jobs:
           body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build-extensions:
+    runs-on: windows-latest
+    needs: build
+    strategy:
+      matrix:
+        branch: [feat/challengejar, feat/template, feat/ModManager, feat/pluslevelstudio]
+        include:
+          - branch: feat/challengejar
+            name: BBPC.ChallengeJarExtension.dll
+          - branch: feat/template
+            name: BBPC.ExtensionTemplate.dll
+          - branch: feat/ModManager
+            name: BBPC.ModManagerExtension.dll
+          - branch: feat/pluslevelstudio
+            name: BBPC.PlusLevelStudioExtension.dll
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+      - name: Get UTC Date
+        id: get-date
+        shell: bash
+        run: echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
+      - name: Restore BBPC.dll from cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ./BBPC/Build/Debug/BBPC.dll
+          key: bbpc-release-dll-${{ runner.os }}-${{ steps.get-date.outputs.date }}
+          restore-keys: |
+            bbpc-release-dll-${{ runner.os }}-
+      - name: Copy BBPC.dll to Dlls folder for extension projects
+        run: |
+          cp ./BBPC/Build/Debug/BBPC.dll ./Dlls/BBPC.dll
+        shell: bash
+      - name: Verify BBPC.dll hash matches (source vs copied)
+        shell: pwsh   # PowerShell (recommended on Windows runners)
+        run: |
+          $sourcePath = "./BBPC/Build/Debug/BBPC.dll"
+          $copiedPath = "./Dlls/BBPC.dll"
+
+          if (-Not (Test-Path $sourcePath)) {
+            Write-Error "Source BBPC.dll not found at $sourcePath"
+            exit 1
+          }
+
+          if (-Not (Test-Path $copiedPath)) {
+            Write-Error "Copied BBPC.dll not found at $copiedPath"
+            exit 1
+          }
+
+          $sourceHash = (Get-FileHash $sourcePath -Algorithm SHA256).Hash
+          $copiedHash = (Get-FileHash $copiedPath -Algorithm SHA256).Hash
+
+          Write-Host "Source BBPC.dll hash: $sourceHash"
+          Write-Host "Copied BBPC.dll hash: $copiedHash"
+
+          if ($sourceHash -ne $copiedHash) {
+            Write-Error "ERROR: Hash mismatch! The copied BBPC.dll does not match the source."
+            Write-Error "This usually means the copy operation failed or the file was corrupted."
+            exit 1
+          }
+
+          Write-Host "✅ Success: Both BBPC.dll files have matching hashes."
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 5.0
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --no-restore
+      - name: Upload a Build Artifact
+        uses: softprops/action-gh-release@v2.2.2
+        with:
+          files: ./BBPC/Build/Debug/BBPC.*.dll
