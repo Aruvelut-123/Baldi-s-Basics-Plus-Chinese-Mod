@@ -25,6 +25,12 @@ jobs:
       with:
         name: BBPC.dll
         path: ./BBPC/Build/Debug/BBPC.dll
+    - name: Upload Dependencies
+      uses: actions/upload-artifact@v6.0.0
+      with:
+        name: Dependencies.zip
+        path: ./BBPC/Build/Debug/MonoMod.*.dll
+        compression-level: 0
   build-extensions:
     runs-on: windows-latest
     strategy:
@@ -46,4 +52,4 @@ jobs:
         uses: actions/upload-artifact@v6.0.0
         with:
           name: BBPC-${{ matrix.branch }}.dll
-          path: ./BBPC/Build/Debug/BBPC*.dll
+          path: ./BBPC/Build/Debug/BBPC.*.dll
