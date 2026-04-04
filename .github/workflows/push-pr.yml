@@ -56,7 +56,7 @@ jobs:
         with:
           script: |
             const branch = '${{ matrix.branch }}';
-            return branch.split('/').join('-');
+            return branch.replace(/"/g, '').split('/').join('-');
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v6.0.0
         with:
