@@ -38,6 +38,15 @@ jobs:
     strategy:
       matrix:
         branch: [feat/challengejar, feat/template, feat/ModManager, feat/pluslevelstudio]
+        include:
+          - branch: feat/challengejar
+            name: BBPC.ChallengeJarExtension.dll
+          - branch: feat/template
+            name: BBPC.ExtensionTemplate.dll
+          - branch: feat/ModManager
+            name: BBPC.ModManagerExtension.dll
+          - branch: feat/pluslevelstudio
+            name: BBPC.PlusLevelStudioExtension.dll
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,18 +59,8 @@ jobs:
         run: dotnet restore
       - name: Build
         run: dotnet build --no-restore
-      - name: Format branch name
-        uses: actions/github-script@v7
-        id: branch
-        with:
-          script: |
-            const branch = '${{ matrix.branch }}';
-            const safe =  branch.replace(/"/g, '').split('/').join('-');
-            const name = `BBPC-${safe}.dll`;
-            console.log(name);
-            return name;
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v6.0.0
         with:
-          name: ${{ steps.branch.outputs.result }}
+          name: ${{ matrix.name }}
           path: ./BBPC/Build/Debug/BBPC.*.dll
