@@ -110,7 +110,7 @@ namespace BBPC.API
             }
             toggleTextureReplace = CreateToggle("TextureToggleButton", Plugin.Instance.GetTranslationKey("BBPC_ToggleTexture", "Enable Texture Replacement"), ConfigManager.EnableTextures.Value, new Vector2(50, -75), 250);
             StandardMenuButton applyButton = CreateApplyButton(() => { refresh_localization(); });
-            AddTooltip(applyButton, Plugin.Instance.GetTranslationKey("BBPC_Apply_Tooltip", "Apply and restart"));
+            AddTooltip(applyButton, Plugin.Instance.GetTranslationKey("BPPC_Apply_Tooltip", "Apply and restart"));
             CurrectLanguage.gameObject.SetActive(true);
         }
 
@@ -155,4 +155,4 @@ namespace BBPC.API
             }
         }
     }
-}  
+}    
