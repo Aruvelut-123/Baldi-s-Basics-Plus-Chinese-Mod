@@ -2,11 +2,11 @@
 
 [English](README.en.md) | [繁體中文](README.zh-TW.md)
 
-一个为 **Baldi's Basics Plus** 提供中文语言支持的 BepInEx 模组。
+一个基于 [TWGSRussifier](https://github.com/BaldiTomorrowGames/TWGSRussifier) 的 BepInEx 模组，用于使 **Baldi's Basics Plus** 的中文语言包正常工作。本模组本身不包含翻译内容，而是让中文语言包在游戏中可用。
 
 ## 功能特性
 
-- 简体中文（SChinese）和繁体中文本地化
+- 使简体中文（SChinese）和繁体中文语言包在游戏中可用
 - 中文 UI 纹理替换（菜单、海报、制作人员名单等）
 - 游戏内语言切换器（通过选项菜单）
 - 自动更新检查器（从 GitHub 获取最新版本）

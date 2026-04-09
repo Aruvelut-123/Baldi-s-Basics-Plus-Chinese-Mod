@@ -2,11 +2,11 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-TW.md)
 
-A BepInEx mod that provides Chinese language support for **Baldi's Basics Plus**.
+A BepInEx mod based on [TWGSRussifier](https://github.com/BaldiTomorrowGames/TWGSRussifier) that makes the Chinese language pack work in **Baldi's Basics Plus**. This mod does not contain translations itself — it enables the Chinese language pack to function properly in the game.
 
 ## Features
 
-- Simplified Chinese (SChinese) and Traditional Chinese localization
+- Enables Simplified Chinese (SChinese) and Traditional Chinese language packs in the game
 - Texture replacement for Chinese UI elements (menus, posters, credits, etc.)
 - In-game language switcher via the options menu
 - Automatic update checker (fetches latest release from GitHub)
