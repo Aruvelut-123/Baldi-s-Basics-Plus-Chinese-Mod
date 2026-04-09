@@ -143,7 +143,7 @@ namespace BBPC.Patches
                         }
                         
                         TextLocalizer customLocalizer = textComponent.gameObject.AddComponent<TextLocalizer>();
-                        customLocalizer.key = "BBPC_Elevator_TimeBonusValue";
+                        customLocalizer.key = localizationKey;
                     }
                 }
             }
@@ -219,4 +219,4 @@ namespace BBPC.Patches
             }
         }
     }
-} 
+}  

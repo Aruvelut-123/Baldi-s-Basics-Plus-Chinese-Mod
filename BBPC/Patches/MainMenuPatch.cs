@@ -4,7 +4,7 @@ using MTM101BaldAPI.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq.Expressions;
+
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -278,10 +278,23 @@ namespace BBPC.Patches
             
             button.OnPress.AddListener(() => { 
                 Application.OpenURL(url);
-                ToggleSocialLinksDropdown(null, null); 
+                HideSocialLinksDropdown(); 
             });
         }
         
+        private static void HideSocialLinksDropdown()
+        {
+            if (socialLinksPanel == null) return;
+
+            dropdownVisible = false;
+            socialLinksPanel.SetActive(false);
+
+            if (dropdownArrow != null)
+            {
+                dropdownArrow.localRotation = Quaternion.Euler(0, 0, 0);
+            }
+        }
+
         private static void ToggleSocialLinksDropdown(Transform? rootTransform, GameObject? modInfoButton)
         {
             if (socialLinksPanel == null || rootTransform == null || modInfoButton == null)
@@ -337,4 +350,4 @@ namespace BBPC.Patches
             rootTransform.ApplyLocalizations(LocalizationKeys);
         }
     }
-} 
+}      

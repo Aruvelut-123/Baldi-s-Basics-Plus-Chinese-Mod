@@ -67,7 +67,7 @@ namespace BBPC
 
             API.Logger.Info($"插件 {BBPCTemp.ModName} 正在初始化...");
             API.Logger.Info($"纹理: {(ConfigManager.AreTexturesEnabled() ? "启用" : "禁用")}, " +
-                           $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}" +
+                           $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}, " +
                            $"开发模式: {(ConfigManager.IsDevModeEnabled() ? "启用" : "禁用")}");
 
             Harmony harmony = new Harmony(BBPCTemp.ModGUID);
@@ -144,31 +144,37 @@ namespace BBPC
                         if (!json_file_path.Contains(lang)) continue;
                         API.Logger.Debug(json_file_path);
                         StreamReader file = File.OpenText(json_file_path);
-                        JsonTextReader reader = new JsonTextReader(file);
-                        JToken lang_json = (JObject)JToken.ReadFrom(reader);
-                        if (lang_json == null)
-                        {
-                            API.Logger.Error("Language File may corrpted! Path: " + json_file_path);
-                            return default_obj;
-                        }
                         try
                         {
-                            API.Logger.Debug(lang_json["items"].Values().ToString());
-                        } catch (NullReferenceException e)
-                        {
-                            API.Logger.Error("Language File may corrpted because it does not have items! Path: " + json_file_path);
-                            continue;
-                        }
-                        foreach (JToken item in lang_json["items"])
-                        {
-                            if (item["key"].ToString() == key)
+                            JsonTextReader reader = new JsonTextReader(file);
+                            JToken lang_json = (JObject)JToken.ReadFrom(reader);
+                            if (lang_json == null)
                             {
-                                API.Logger.Debug("Language File " + json_file_path + " contains " + key + " and the value is " + item["value"].ToString());
-                                return item["value"].ToString();
+                                API.Logger.Error("Language File may corrupted! Path: " + json_file_path);
+                                continue;
                             }
+                            try
+                            {
+                                API.Logger.Debug(lang_json["items"].Values().ToString());
+                            } catch (NullReferenceException)
+                            {
+                                API.Logger.Error("Language File may corrupted because it does not have items! Path: " + json_file_path);
+                                continue;
+                            }
+                            foreach (JToken item in lang_json["items"])
+                            {
+                                if (item["key"].ToString() == key)
+                                {
+                                    API.Logger.Debug("Language File " + json_file_path + " contains " + key + " and the value is " + item["value"].ToString());
+                                    return item["value"].ToString();
+                                }
+                            }
+                            API.Logger.Debug("Language File " + json_file_path + " doesn't contains " + key);
                         }
-                        API.Logger.Debug("Language File " + json_file_path + " doesn't contains " + key);
-                        file.Close();
+                        finally
+                        {
+                            file.Close();
+                        }
                     }
                 }
             }
