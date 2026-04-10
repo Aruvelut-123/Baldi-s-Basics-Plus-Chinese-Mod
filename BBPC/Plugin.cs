@@ -153,20 +153,28 @@ namespace BBPC
                                 API.Logger.Error("Language File may corrupted! Path: " + json_file_path);
                                 continue;
                             }
+                            JToken? items = lang_json["items"];
+                            if (items == null)
+                            {
+                                API.Logger.Error("Language File may corrupted because it does not have items! Path: " + json_file_path);
+                                continue;
+                            }
                             try
                             {
-                                API.Logger.Debug(lang_json["items"].Values().ToString());
+                                API.Logger.Debug(items.Values().ToString());
                             } catch (NullReferenceException)
                             {
                                 API.Logger.Error("Language File may corrupted because it does not have items! Path: " + json_file_path);
                                 continue;
                             }
-                            foreach (JToken item in lang_json["items"])
+                            foreach (JToken item in items)
                             {
-                                if (item["key"].ToString() == key)
+                                JToken? keyToken = item["key"];
+                                JToken? valueToken = item["value"];
+                                if (keyToken != null && keyToken.ToString() == key)
                                 {
-                                    API.Logger.Debug("Language File " + json_file_path + " contains " + key + " and the value is " + item["value"].ToString());
-                                    return item["value"].ToString();
+                                    API.Logger.Debug("Language File " + json_file_path + " contains " + key + " and the value is " + (valueToken?.ToString() ?? ""));
+                                    return valueToken?.ToString() ?? default_obj;
                                 }
                             }
                             API.Logger.Debug("Language File " + json_file_path + " doesn't contains " + key);
