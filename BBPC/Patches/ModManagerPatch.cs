@@ -34,7 +34,7 @@ namespace BBPC.ModManagerExtension.Patches
             reloadTL.key = "MMg_Reload";
             reloadTL.RefreshLocalization();
             Transform applyTransform = __instance.transform.Find("ApplyButton");
-            if (reloadTransform == null)
+            if (applyTransform == null)
             {
                 API.Logger.Error("Failed to find Apply button");
                 return;
