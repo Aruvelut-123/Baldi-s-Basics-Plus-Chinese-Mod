@@ -189,14 +189,22 @@ namespace BBPC.Patches
             RectTransform panelRect = panel.GetComponent<RectTransform>();
             panelRect.anchorMin = new Vector2(0, 1);
             panelRect.anchorMax = new Vector2(0, 1);
+            panelRect.pivot = new Vector2(0, 1);
             
-            panelRect.anchoredPosition = new Vector2(145, -116);
+            panelRect.anchoredPosition = new Vector2(75, -116);
             
-            float buttonHeight = 35f;
-            float topBottomPadding = 20f;
-            float panelHeight = (SocialMediaLinks.Count * buttonHeight) + topBottomPadding;
+            VerticalLayoutGroup layoutGroup = panel.AddComponent<VerticalLayoutGroup>();
+            layoutGroup.padding = new RectOffset(10, 10, 10, 10);
+            layoutGroup.spacing = 5f;
+            layoutGroup.childAlignment = TextAnchor.UpperCenter;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = false;
+            layoutGroup.childForceExpandWidth = true;
+            layoutGroup.childForceExpandHeight = false;
             
-            panelRect.sizeDelta = new Vector2(130f, panelHeight);
+            ContentSizeFitter sizeFitter = panel.AddComponent<ContentSizeFitter>();
+            sizeFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             
             Image panelImage = panel.GetComponent<Image>();
             panelImage.color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
@@ -217,12 +225,9 @@ namespace BBPC.Patches
             GameObject buttonObj = new GameObject(buttonName, typeof(RectTransform), typeof(TextMeshProUGUI));
             buttonObj.transform.SetParent(parent.transform, false);
 
-            RectTransform buttonRect = buttonObj.GetComponent<RectTransform>();
-            buttonRect.anchorMin = new Vector2(0, 1);
-            buttonRect.anchorMax = new Vector2(1, 1);
-            buttonRect.pivot = new Vector2(0.5f, 1);
-            buttonRect.anchoredPosition = new Vector3(0, -10 - (index * 35), 0);
-            buttonRect.sizeDelta = new Vector2(0, 30);
+            LayoutElement layoutElement = buttonObj.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 30f;
+            layoutElement.minWidth = 100f;
 
             TextMeshProUGUI textComponent = buttonObj.GetComponent<TextMeshProUGUI>();
             textComponent.fontSize = 16;
@@ -249,12 +254,9 @@ namespace BBPC.Patches
             GameObject buttonObj = new GameObject(buttonName, typeof(RectTransform), typeof(TextMeshProUGUI));
             buttonObj.transform.SetParent(parent.transform, false);
             
-            RectTransform buttonRect = buttonObj.GetComponent<RectTransform>();
-            buttonRect.anchorMin = new Vector2(0, 1);
-            buttonRect.anchorMax = new Vector2(1, 1);
-            buttonRect.pivot = new Vector2(0.5f, 1);
-            buttonRect.anchoredPosition = new Vector3(0, -10 - (index * 35), 0);
-            buttonRect.sizeDelta = new Vector2(0, 30);
+            LayoutElement layoutElement = buttonObj.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 30f;
+            layoutElement.minWidth = 100f;
             
             TextMeshProUGUI textComponent = buttonObj.GetComponent<TextMeshProUGUI>();
             textComponent.fontSize = 16;
@@ -350,4 +352,4 @@ namespace BBPC.Patches
             rootTransform.ApplyLocalizations(LocalizationKeys);
         }
     }
-}      
+}        
