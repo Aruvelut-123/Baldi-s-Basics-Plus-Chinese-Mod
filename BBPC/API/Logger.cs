@@ -55,8 +55,6 @@ namespace BBPC.API
 
         public static void Error(string message)
         {
-            if (!IsLoggingEnabled()) return;
-            
             string msg = FormatMessage("ERROR", message);
             if (_bepLogger != null)
                 _bepLogger.Log(BepInEx.Logging.LogLevel.Error, msg);
@@ -89,4 +87,4 @@ namespace BBPC.API
             return ConfigManager.IsLoggingEnabled();
         }
     }
-} 
+}  

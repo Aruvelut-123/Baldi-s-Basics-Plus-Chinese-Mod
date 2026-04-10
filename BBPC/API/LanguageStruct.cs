@@ -35,5 +35,10 @@ namespace BBPC.API
         {
             return localizationTable[key];
         }
+
+        public bool TryGetLocalizedText(string key, out string value)
+        {
+            return localizationTable.TryGetValue(key, out value);
+        }
     }
 }
