@@ -53,10 +53,9 @@ namespace BBPC.ExtensionTemplate.API
                 UnityEngine.Debug.LogWarning(msg);
         }
 
+        // Error() always logs regardless of IsLoggingEnabled() — errors should never be silently suppressed
         public static void Error(string message)
         {
-            if (!IsLoggingEnabled()) return;
-            
             string msg = FormatMessage("ERROR", message);
             if (_bepLogger != null)
                 _bepLogger.Log(BepInEx.Logging.LogLevel.Error, msg);
@@ -87,4 +86,4 @@ namespace BBPC.ExtensionTemplate.API
             return true;
         }
     }
-} 
+}   
