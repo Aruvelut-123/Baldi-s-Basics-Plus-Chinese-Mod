@@ -1,11 +1,10 @@
 ﻿using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using TMPro;
+using MTM101BaldAPI;
 
 namespace BBPC.Patches
 {
+    [ConditionalPatchAlways]
     [HarmonyPatch(typeof(global::TextLocalizer))]
     internal class TextLocalizerPatches
     {

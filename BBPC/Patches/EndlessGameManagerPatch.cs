@@ -4,9 +4,11 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using MTM101BaldAPI;
 
 namespace BBPC.Patches
 {
+    [ConditionalPatchAlways]
     [HarmonyPatch(typeof(EndlessGameManager))]
     internal class EndlessGameManagerPatch
     {

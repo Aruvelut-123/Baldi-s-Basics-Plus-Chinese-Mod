@@ -1,3 +1,4 @@
+using MTM101BaldAPI;
 using HarmonyLib;
 using MTM101BaldAPI.AssetTools;
 using MTM101BaldAPI.ErrorHandler;
@@ -6,8 +7,6 @@ using Newtonsoft.Json.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection.Emit;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -15,6 +14,7 @@ using UnityEngine.SceneManagement;
 
 namespace BBPC.Patches
 {
+    [ConditionalPatchAlways]
     [HarmonyPatch]
     public class CreditsPatch
     {

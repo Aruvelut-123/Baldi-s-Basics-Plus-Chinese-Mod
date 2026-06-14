@@ -5,9 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using MTM101BaldAPI;
 
 namespace BBPC.Patches
 {
+    [ConditionalPatchAlways]
     [HarmonyPatch]
     public class FloorsPatch
     {

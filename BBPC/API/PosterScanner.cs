@@ -11,11 +11,13 @@ namespace BBPC.API
         /// <param name="modPath">模组文件夹路径</param>
         public static void ScanAndExportNewPosters(string modPath)
         {
+#if DEBUG
             if (!ConfigManager.IsDevModeEnabled())
             {
                 Logger.Debug("开发者模式已禁用，海报提取已跳过。");
                 return;
             }
+#endif
 
             string postersPath = Path.Combine(modPath, "PosterFiles");
             if (!Directory.Exists(postersPath))

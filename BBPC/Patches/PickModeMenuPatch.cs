@@ -1,12 +1,7 @@
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.UI;
+using MTM101BaldAPI;
 using System.Collections.Generic;
-using System.Text;
-using TMPro;
-using System.Reflection;
-using System.Collections;
 using BBPC.API;
 
 namespace BBPC
@@ -33,7 +28,8 @@ namespace BBPC
             new KeyValuePair<string, Vector2>("TutorialPrompt/NoButton", new Vector2(160f, 32f)),
             new KeyValuePair<string, Vector2>("TutorialPrompt/NoButton/Text", new Vector2(155f, 32f))
         };
-        
+
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(GameLoader), "LoadLevel")]
         private static class LoadLevelPatch
         {
@@ -43,7 +39,8 @@ namespace BBPC
                 if (!BBPCTemp.is_eng) ApplyFixesToPickMode();
             }
         }
-        
+
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(GameObject), "SetActive")]
         private static class SetActivePatch
         {

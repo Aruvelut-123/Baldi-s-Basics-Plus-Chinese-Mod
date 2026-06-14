@@ -1,12 +1,12 @@
 using HarmonyLib;
 using UnityEngine;
 using System.Collections.Generic;
-using System.Text;
-using TMPro;
 using BBPC.API;
+using MTM101BaldAPI;
 
 namespace BBPC
 {
+    [ConditionalPatchAlways]
     [HarmonyPatch(typeof(OptionsMenu), "Awake")]
     internal class OptionsMenuPatch
     {

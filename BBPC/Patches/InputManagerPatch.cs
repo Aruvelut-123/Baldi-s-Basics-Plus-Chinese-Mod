@@ -1,9 +1,11 @@
 ﻿using BBPC.API;
 using HarmonyLib;
 using System;
+using MTM101BaldAPI;
 
 namespace BBPC.Patches
 {
+    [ConditionalPatchAlways]
     [HarmonyPatch]
     public class InputManagerPatch
     {

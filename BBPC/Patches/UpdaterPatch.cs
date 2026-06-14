@@ -1,14 +1,15 @@
 using HarmonyLib;
 using System.Diagnostics;
 using System.Reflection;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using BBPC.API;
+using MTM101BaldAPI;
 
 namespace BBPC.Patches
 {
+    [ConditionalPatchAlways]
     [HarmonyPatch]
     internal class UpdaterPatch
     {

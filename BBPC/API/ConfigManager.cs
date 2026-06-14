@@ -10,7 +10,6 @@ using System.IO;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace BBPC.API
 {
@@ -18,7 +17,9 @@ namespace BBPC.API
     {
         public static ConfigEntry<bool> EnableTextures { get; private set; } = null!;
         public static ConfigEntry<bool> EnableLogging { get; private set; } = null!;
+#if DEBUG
         public static ConfigEntry<bool> EnableDevMode { get; private set; } = null!;
+#endif
         public static ConfigEntry<string> currect_lang { get; set; } = null!;
 
         private static ManualLogSource _logger = null!;
@@ -29,7 +30,9 @@ namespace BBPC.API
 
             EnableTextures = plugin.Config.Bind("General", "Enable Textures", true, "Enable or disable texture replacement.");
             EnableLogging = plugin.Config.Bind("General", "Enable Logging", false, "Enable or disable logging.");
+#if DEBUG
             EnableDevMode = plugin.Config.Bind("Development", "Enable Dev Mode", false, "Enable development mode (scans and exports new posters). DISABLE FOR RELEASE!");
+#endif
             currect_lang = plugin.Config.Bind("General", "Currect Language", "SChinese", "The Language that currectly using.");
             
             _logger.LogInfo("Config loaded successfully.");
@@ -44,11 +47,12 @@ namespace BBPC.API
         {
             return EnableLogging.Value;
         }
-
+#if DEBUG
         public static bool IsDevModeEnabled()
         {
             return EnableDevMode.Value;
         }
+#endif
     }
 
     public class BBPCOptionsCategory : CustomOptionsCategory
@@ -106,7 +110,7 @@ namespace BBPC.API
                 AddTooltip(nextButton, langNotice);
             } catch (NullReferenceException e)
             {
-                API.Logger.Error("???????? A strange error has occured. Detail: " + e.Message);
+                API.Logger.Error("NULL ate everything!!!\nA strange error has occured.\nDetail: " + e.Message);
             }
             toggleTextureReplace = CreateToggle("TextureToggleButton", Plugin.Instance.GetTranslationKey("BBPC_ToggleTexture", "Enable Texture Replacement"), ConfigManager.EnableTextures.Value, new Vector2(50, -75), 250);
             StandardMenuButton applyButton = CreateApplyButton(() => { refresh_localization(); });

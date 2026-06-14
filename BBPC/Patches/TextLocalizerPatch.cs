@@ -1,8 +1,5 @@
-using System;
 using UnityEngine;
 using TMPro;
-using System.Collections.Generic;
-using BBPC.API;
 using Logger = BBPC.API.Logger;
 
 namespace BBPC

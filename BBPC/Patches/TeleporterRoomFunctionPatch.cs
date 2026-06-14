@@ -3,6 +3,7 @@ using HarmonyLib;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using MTM101BaldAPI;
 
 namespace BBPC
 {
@@ -34,6 +35,7 @@ namespace BBPC
         }
     }
 
+    [ConditionalPatchAlways]
     [HarmonyPatch(typeof(TeleporterRoomFunction), "Initialize")]
     internal class TeleporterRoomFunctionPatch
     {

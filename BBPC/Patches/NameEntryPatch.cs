@@ -1,10 +1,7 @@
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.UI;
+using MTM101BaldAPI;
 using System.Collections.Generic;
-using System.Text;
-using TMPro;
 using BBPC.API;
 
 namespace BBPC
@@ -20,6 +17,7 @@ namespace BBPC
             { "Version Number", "BBPC_Menu_Version" }
         };
 
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(GameObject), "SetActive")]
         private static class SetActivePatch
         {
@@ -44,8 +42,8 @@ namespace BBPC
                 }
             }
         }
-        
-        
+
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(NameManager), "Awake")]
         private static class NameManagerAwakePatch
         {
@@ -59,8 +57,8 @@ namespace BBPC
                 }
             }
         }
-        
-        
+
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(NameManager), "Load")]
         private static class LoadPatch
         {

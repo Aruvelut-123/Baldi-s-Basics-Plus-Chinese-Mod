@@ -1,13 +1,10 @@
 using BBPC.API;
 using HarmonyLib;
+using MTM101BaldAPI;
 using MTM101BaldAPI.UI;
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace BBPC.Patches
@@ -44,6 +41,7 @@ namespace BBPC.Patches
         }
     }
 
+    [ConditionalPatchAlways]
     [HarmonyPatch] 
     internal class MainMenuPatch
     {

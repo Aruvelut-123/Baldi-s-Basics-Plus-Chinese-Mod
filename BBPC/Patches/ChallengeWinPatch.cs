@@ -2,7 +2,7 @@ using BBPC.API;
 using HarmonyLib;
 using System.Linq;
 using TMPro;
-using UnityEngine;
+using MTM101BaldAPI;
 
 namespace BBPC.Patches
 {
@@ -10,6 +10,7 @@ namespace BBPC.Patches
     {
         private const string WinTextKey = "BBPC_ChallengeWin_Text";
 
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(ChallengeWin), "Start")]
         private static class ChallengeWinStartPatch
         {

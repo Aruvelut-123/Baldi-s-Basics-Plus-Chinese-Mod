@@ -1,12 +1,9 @@
-using BBPC.API;
+using MTM101BaldAPI;
 using HarmonyLib;
 using System.Collections.Generic;
-using System.Security.Policy;
 using System.Text;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.UI;
 
 namespace BBPC
 {
@@ -63,6 +60,7 @@ namespace BBPC
             return map;
         }
 
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(MenuButton), "Press")]
         private static class MenuButtonPressPatch
         {
@@ -77,6 +75,7 @@ namespace BBPC
             }
         }
 
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(GameObject), "SetActive")]
         private static class SetActivePatch
         {

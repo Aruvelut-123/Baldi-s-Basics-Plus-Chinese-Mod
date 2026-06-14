@@ -9,6 +9,7 @@ using UnityEngine;
 
 namespace BBPC.MTMAPIPatches
 {
+    [ConditionalPatchAlways]
     [HarmonyPatch(typeof(SaveManagerMenu))]
     public class SaveManagerMenuPatch
     {

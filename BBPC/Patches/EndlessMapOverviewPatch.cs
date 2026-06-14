@@ -1,8 +1,10 @@
 using HarmonyLib;
 using BBPC.API;
+using MTM101BaldAPI;
 
 namespace BBPC.Patches
 {
+	[ConditionalPatchAlways]
     [HarmonyPatch(typeof(EndlessMapOverview))]
     class EndlessMapOverviewPatch
     {

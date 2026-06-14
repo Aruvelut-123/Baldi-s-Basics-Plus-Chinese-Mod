@@ -1,4 +1,5 @@
 using HarmonyLib;
+using MTM101BaldAPI;
 using MTM101BaldAPI.AssetTools;
 using System.IO;
 using System.Linq;
@@ -7,6 +8,7 @@ using BBPC.API;
 
 namespace BBPC.Patches
 {
+    [ConditionalPatchAlways]
     [HarmonyPatch(typeof(Credits), "Start")]
     internal class CreditsAssetsPatch
     {

@@ -1,9 +1,9 @@
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using MTM101BaldAPI;
 using BBPC.API;
 
 namespace BBPC
@@ -16,7 +16,8 @@ namespace BBPC
         {
             new KeyValuePair<string, Vector2>("GameCanvas/Game/MinigameHUD/ScoreIndicatorBase/ScoreIndicator", new Vector2(103f, 32f))
         };
-        
+
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(MinigameBase), "StartMinigame")]
         private static class StartMinigamePatch
         {

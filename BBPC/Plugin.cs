@@ -16,7 +16,6 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace BBPC
@@ -44,12 +43,13 @@ namespace BBPC
     [BepInDependency("bbplus.challengejar", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("rost.moment.baldiplus.funsettings", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("wazkitta.plusmod.microeventsplus", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("levs_kittne.baldiplus.null", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInProcess("BALDI.exe")]
     public class Plugin : BaseUnityPlugin
     {
         public static Plugin Instance { get; private set; } = null!;
         private Harmony? harmonyInstance = null!;
-        private string[] expectedGameVersions = ["0.14", "0.14.1"];
+        private string[] expectedGameVersions = ["0.14", "0.14.1", "0.14.2"];
 
         private static readonly string[] menuTextureNames =
         {
@@ -67,8 +67,12 @@ namespace BBPC
 
             API.Logger.Info($"插件 {BBPCTemp.ModName} 正在初始化...");
             API.Logger.Info($"纹理: {(ConfigManager.AreTexturesEnabled() ? "启用" : "禁用")}, " +
-                           $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}" +
-                           $"开发模式: {(ConfigManager.IsDevModeEnabled() ? "启用" : "禁用")}");
+                           $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}"
+#if DEBUG
+                           + $"开发模式: {(ConfigManager.IsDevModeEnabled() ? "启用" : "禁用")}");
+#else
+                           );
+#endif
 
             Harmony harmony = new Harmony(BBPCTemp.ModGUID);
 
@@ -222,11 +226,14 @@ namespace BBPC
                 UpdatePosters(modPath);
             }
 
+#if DEBUG
+
             if (ConfigManager.IsDevModeEnabled())
             {
                 yield return "提取海报信息中 (开发模式)...";
                 PosterScanner.ScanAndExportNewPosters(modPath);
             }
+#endif
 
             API.Logger.Info("资源加载完成！");
         }

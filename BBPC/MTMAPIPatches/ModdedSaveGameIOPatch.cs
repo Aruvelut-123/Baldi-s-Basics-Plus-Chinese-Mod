@@ -1,9 +1,11 @@
 ﻿using HarmonyLib;
+using MTM101BaldAPI;
 using MTM101BaldAPI.SaveSystem;
 using System.Text;
 
 namespace BBPC.MTMAPIPatches
 {
+    [ConditionalPatchAlways]
     [HarmonyPatch(typeof(ModdedSaveGameIOBinary))]
     public class ModdedSaveGameIOPatch
     {

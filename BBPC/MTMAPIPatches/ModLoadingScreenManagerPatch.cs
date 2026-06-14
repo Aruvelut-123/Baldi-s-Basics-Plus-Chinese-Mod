@@ -4,11 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
-using TMPro;
 using UnityEngine;
 
 namespace BBPC.MTMAPIPatches
 {
+    [ConditionalPatchAlways]
     [HarmonyPatch(typeof(ModLoadingScreenManager))]
     public class ModLoadingScreenManagerPatch
     {

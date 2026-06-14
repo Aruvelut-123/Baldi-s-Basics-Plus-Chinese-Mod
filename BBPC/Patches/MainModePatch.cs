@@ -1,10 +1,7 @@
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.UI;
+using MTM101BaldAPI;
 using System.Collections.Generic;
-using System.Text;
-using TMPro;
 using BBPC.API;
 
 namespace BBPC
@@ -17,7 +14,8 @@ namespace BBPC
         {
             new KeyValuePair<string, Vector2>("MainContinue", new Vector2(380f, 32f))
         };
-        
+
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(MenuButton), "Press")]
         private static class MainButtonPressPatch
         {
@@ -30,7 +28,8 @@ namespace BBPC
                 }
             }
         }
-        
+
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(GameObject), "SetActive")]
         private static class SetActivePatch
         {

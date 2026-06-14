@@ -1,13 +1,17 @@
-using HarmonyLib;
-using UnityEngine;
-using System.Collections.Generic;
-using System.Text;
-using TMPro;
 using BBPC.API;
+using BepInEx.Bootstrap;
+using HarmonyLib;
+using MTM101BaldAPI;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using TMPro;
+using UnityEngine;
 
 namespace BBPC.Patches
 {
-    [HarmonyPatch(typeof(ElevatorScreen))]
+    [HarmonyPatch]
     internal class ElevatorScreenPatch
     {
         private static bool fixesApplied = false;
@@ -54,12 +58,48 @@ namespace BBPC.Patches
             new KeyValuePair<string, Vector2>("TimeBonusText", new Vector2(94f, 30f)),
             new KeyValuePair<string, Vector2>("GradeBonusText", new Vector2(103f, 30f))
         };
-        
-        [HarmonyPatch("Start")]
+
+        [ConditionalPatchAlways]
+        [HarmonyPatch(typeof(ElevatorScreen), "ZoomExit")]
+        [HarmonyPrefix]
+        private static bool ReplaceZoomExit(ElevatorScreen __instance, ref IEnumerator __result)
+        {
+            bool nullLoaded = Chainloader.PluginInfos.Keys.Any(key => key.Equals("levs_kittne.baldiplus.null", StringComparison.OrdinalIgnoreCase));
+            API.Logger.Info("Null loadded: " + nullLoaded.ToString());
+            if (nullLoaded)
+            {
+                __result = ZoomExitSafe(__instance);
+                return false;
+            }
+            else return true;
+        }
+
+        private static IEnumerator ZoomExitSafe(ElevatorScreen screen)
+        {
+            var traverse = Traverse.Create(screen);
+
+            float scale = 1f;
+            traverse.Field("busy").SetValue(true);
+
+            float maxScale = traverse.Field("maxScale").GetValue<float>();
+            float scaleSpeed = traverse.Field("scaleSpeed").GetValue<float>();
+
+            while (scale < maxScale)
+            {
+                yield return null;
+                scale += scaleSpeed * Time.unscaledDeltaTime;
+                screen.transform.localScale = Vector3.one * scale;
+            }
+            screen.transform.localScale = Vector3.one * maxScale;
+            traverse.Field("busy").SetValue(false);
+        }
+
+        [ConditionalPatchAlways]
+        [HarmonyPatch(typeof(ElevatorScreen), "Start")]
         [HarmonyPostfix]
         static void StartPostfix(ElevatorScreen __instance)
         {
-            if (!BBPCTemp.is_eng)
+            if (!BBPCTemp.is_eng && !Chainloader.PluginInfos.ContainsKey("levs_kittne.baldiplus.null"))
             {
                 fixesApplied = false;
 
@@ -69,8 +109,9 @@ namespace BBPC.Patches
             }
             
         }
-        
-        [HarmonyPatch("StartGame")]
+
+        [ConditionalPatchAlways]
+        [HarmonyPatch(typeof(ElevatorScreen), "StartGame")]
         [HarmonyPrefix]
         static void StartGamePrefix()
         {
@@ -138,7 +179,7 @@ namespace BBPC.Patches
                         {
                             if (component != null && component.GetType().Name == "TextLocalizer" && component.GetType() != typeof(TextLocalizer))
                             {
-                                Object.Destroy(component);
+                                UnityEngine.Object.Destroy(component);
                             }
                         }
                         
@@ -162,7 +203,7 @@ namespace BBPC.Patches
                     {
                         if (component != null && component.GetType().Name == "TextLocalizer" && component.GetType() != typeof(TextLocalizer))
                         {
-                            Object.Destroy(component);
+                            UnityEngine.Object.Destroy(component);
                         }
                     }
                     

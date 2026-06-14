@@ -1,17 +1,17 @@
 using BBPC.API;
 using HarmonyLib;
-using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
+using MTM101BaldAPI;
 
 namespace BBPC.Patches
 {
     internal class PlaceholderWinManagerPatch
     {
         private static bool initialized = false;
-        
+
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(PlaceholderWinManager), "Initialize")]
         private static class InitializePatch
         {
@@ -63,7 +63,8 @@ namespace BBPC.Patches
                 }
             }
         }
-  
+
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(CoreGameManager), "Quit")]
         private static class QuitPatch
         {

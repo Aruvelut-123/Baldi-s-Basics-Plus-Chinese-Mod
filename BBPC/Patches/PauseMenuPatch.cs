@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using MTM101BaldAPI;
 
 namespace BBPC
 {
@@ -20,6 +21,7 @@ namespace BBPC
             { "CoreGameManager(Clone)/PauseMenuScreens/PauseScreen/Main/SeedLabel", "BBPC_Pause_SeedButton" }
         };
 
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(CoreGameManager), "Start")]
         private static class CoreGameManagerStartPatch 
         {
@@ -51,6 +53,7 @@ namespace BBPC
             }
         }
 
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(GameObject), "SetActive")]
         private static class PauseScreenSetActivePatch
         {
@@ -65,6 +68,7 @@ namespace BBPC
             }
         }
 
+        [ConditionalPatchAlways]
         [HarmonyPatch(typeof(CoreGameManager), "Pause")]
         private static class PauseMethodPatch
         {

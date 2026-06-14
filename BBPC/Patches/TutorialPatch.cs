@@ -1,11 +1,12 @@
 using BBPC.API;
 using HarmonyLib;
 using System.Collections;
-using TMPro;
 using UnityEngine;
+using MTM101BaldAPI;
 
 namespace BBPC.Patches
 {
+    [ConditionalPatchAlways]
     [HarmonyPatch(typeof(TutorialGameManager), "BeginPlay")]
     public static class TutorialPatch
     {
