@@ -18,7 +18,7 @@
     <Authors>Baymaxawa</Authors>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
-    <AssemblyTitle>BBPC.NULLStyle</AssemblyTitle>
+    <AssemblyTitle></AssemblyTitle>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
