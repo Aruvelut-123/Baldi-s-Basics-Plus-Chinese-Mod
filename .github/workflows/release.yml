@@ -30,7 +30,7 @@ jobs:
       uses: softprops/action-gh-release@v2.2.2
       with:
         files: |
-          ./BBPC/Build/Debug/BBPC.dll
+          ./BBPC/Build/Release/BBPC.dll
           ./Dlls/MonoMod.Backports.dll
           ./Dlls/MonoMod.ILHelpers.dll
   changelog:
@@ -83,18 +83,18 @@ jobs:
       - name: Restore BBPC.dll from cache
         uses: actions/cache/restore@v5
         with:
-          path: ./BBPC/Build/Debug/BBPC.dll
+          path: ./BBPC/Build/Release/BBPC.dll
           key: bbpc-release-dll-${{ runner.os }}-${{ steps.get-date.outputs.timestamp }}
           restore-keys: |
             bbpc-release-dll-${{ runner.os }}-
       - name: Copy BBPC.dll to Dlls folder for extension projects
         run: |
-          cp ./BBPC/Build/Debug/BBPC.dll ./Dlls/BBPC.dll
+          cp ./BBPC/Build/Release/BBPC.dll ./Dlls/BBPC.dll
         shell: bash
       - name: Verify BBPC.dll hash matches (source vs copied)
         shell: pwsh   # PowerShell (recommended on Windows runners)
         run: |
-          $sourcePath = "./BBPC/Build/Debug/BBPC.dll"
+          $sourcePath = "./BBPC/Build/Release/BBPC.dll"
           $copiedPath = "./Dlls/BBPC.dll"
 
           if (-Not (Test-Path $sourcePath)) {
@@ -131,4 +131,4 @@ jobs:
       - name: Upload a Build Artifact
         uses: softprops/action-gh-release@v2.2.2
         with:
-          files: ./BBPC/Build/Debug/BBPC.*.dll
+          files: ./BBPC/Build/Release/BBPC.*.dll
