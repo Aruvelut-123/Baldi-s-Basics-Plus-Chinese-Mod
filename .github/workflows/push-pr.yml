@@ -55,7 +55,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        branch: [feat/challengejar, feat/template, feat/ModManager, feat/pluslevelstudio]
+        branch: [feat/challengejar, feat/template, feat/ModManager, feat/pluslevelstudio, feat/nullstyle]
         include:
           - branch: feat/challengejar
             name: BBPC.ChallengeJarExtension.dll
