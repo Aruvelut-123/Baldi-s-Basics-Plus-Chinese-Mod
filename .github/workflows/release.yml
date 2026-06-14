@@ -70,6 +70,8 @@ jobs:
             name: BBPC.ModManagerExtension.dll
           - branch: feat/pluslevelstudio
             name: BBPC.PlusLevelStudioExtension.dll
+          - branch: feat/nullstyle
+            name: BBPC.NULLStyleExtension.dll
     steps:
       - uses: actions/checkout@v4
         with:
