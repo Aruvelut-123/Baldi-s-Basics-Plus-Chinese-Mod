@@ -24,7 +24,7 @@ jobs:
     - name: Save BBPC.dll to cache (fresh every run)
       uses: actions/cache/save@v5
       with:
-        path: ./BBPC/Build/Debug/BBPC.dll
+        path: ./BBPC/Build/Release/BBPC.dll
         key: bbpc-release-dll-${{ runner.os }}-${{ steps.get-date.outputs.timestamp }}
     - name: Upload DLL and Dependencies to Release
       uses: softprops/action-gh-release@v2.2.2
