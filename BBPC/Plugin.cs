@@ -14,6 +14,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -50,6 +51,7 @@ namespace BBPC
         public static Plugin Instance { get; private set; } = null!;
         private Harmony? harmonyInstance = null!;
         private string[] expectedGameVersions = ["0.14", "0.14.1", "0.14.2"];
+        public static TMP_FontAsset? tmp_FontAsset;
 
         private static readonly string[] menuTextureNames =
         {
@@ -80,9 +82,11 @@ namespace BBPC
 
             new Credit(this);
 
-            harmony.PatchAllConditionals();
+            harmony.PatchAll();
 
-            VersionCheck.CheckGameVersion(expectedGameVersions, Info);
+            VersionCheck.CheckGameVersion(expectedGameVersions);
+
+            tmp_FontAsset = FontHelper.GetTextMeshProFont();
 
             string modPath = AssetLoader.GetModPath(this);
             string langPath = Path.Combine(modPath, "Language", ConfigManager.currect_lang.Value);
@@ -237,6 +241,55 @@ namespace BBPC
 
             API.Logger.Info("资源加载完成！");
         }
+
+        [ConditionalPatchAlways]
+        [HarmonyPatch(typeof(TextMeshProUGUI), "Awake")]
+        [HarmonyPostfix]
+        public static void TextMeshProUGUI_Awake_Postfix(TextMeshProUGUI __instance)
+        {
+            ProccessComponent(__instance);
+        }
+
+        [ConditionalPatchAlways]
+        [HarmonyPatch(typeof(TextMeshPro), "Awake")]
+        [HarmonyPostfix]
+        public static void TextMeshPro_Awake_Postfix(TextMeshPro __instance)
+        {
+            ProccessComponent(__instance);
+        }
+
+        [ConditionalPatchAlways]
+        [HarmonyPatch(typeof(TMP_Text), "font", MethodType.Setter)]
+        [HarmonyPostfix]
+        public static void TMPText_font_set_Postfix(TMP_Text __instance)
+        {
+            ProccessComponent(__instance);
+        }
+
+        public static void ProccessComponent(TMP_Text text)
+        {
+            try
+            {
+                
+                if (!FontHelper.IsFontLoaded())
+                {
+                    API.Logger.Error("Font not currectly loadded! Stopping process");
+                    return;
+                }
+                API.Logger.Debug("Current text object font name: " + text.font.name);
+                API.Logger.Debug("Loaded font name: " + tmp_FontAsset.name);
+                if (text != null && text.font != null && !text.font.name.Contains("S1") && tmp_FontAsset != null)
+                {
+                    text.font = tmp_FontAsset;
+                }
+                API.Logger.Debug("Replaced text object font name: " + text.font.name);
+            }
+            catch (Exception e)
+            {
+                API.Logger.Error("Font not replaced!\nDetail: " + e.StackTrace);
+            }
+        }
+
 
         public void ApplyMenuTextures()
         {

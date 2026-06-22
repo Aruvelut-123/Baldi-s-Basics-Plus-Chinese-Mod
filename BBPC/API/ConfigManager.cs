@@ -21,6 +21,7 @@ namespace BBPC.API
         public static ConfigEntry<bool> EnableDevMode { get; private set; } = null!;
 #endif
         public static ConfigEntry<string> currect_lang { get; set; } = null!;
+        public static ConfigEntry<string> overrideFontPath { get; private set; } = null!;
 
         private static ManualLogSource _logger = null!;
 
@@ -34,6 +35,7 @@ namespace BBPC.API
             EnableDevMode = plugin.Config.Bind("Development", "Enable Dev Mode", false, "Enable development mode (scans and exports new posters). DISABLE FOR RELEASE!");
 #endif
             currect_lang = plugin.Config.Bind("General", "Currect Language", "SChinese", "The Language that currectly using.");
+            overrideFontPath = plugin.Config.Bind("General", "Override Font Path", "ch2", "Start from the mod asset folder, define a tmp font file path to load and replace in game font");
             
             _logger.LogInfo("Config loaded successfully.");
         }
