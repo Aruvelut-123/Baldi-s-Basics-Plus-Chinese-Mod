@@ -16,11 +16,13 @@ namespace BBPC.API
     public static class ConfigManager
     {
         public static ConfigEntry<bool> EnableTextures { get; private set; } = null!;
+        public static ConfigEntry<bool> EnableSounds { get; private set; } = null!;
         public static ConfigEntry<bool> EnableLogging { get; private set; } = null!;
 #if DEBUG
         public static ConfigEntry<bool> EnableDevMode { get; private set; } = null!;
 #endif
         public static ConfigEntry<string> currect_lang { get; set; } = null!;
+        public static ConfigEntry<bool> EnableFontReplacement { get; set; } = null!;
         public static ConfigEntry<string> overrideFontPath { get; private set; } = null!;
 
         private static ManualLogSource _logger = null!;
@@ -30,11 +32,13 @@ namespace BBPC.API
             _logger = logger;
 
             EnableTextures = plugin.Config.Bind("General", "Enable Textures", true, "Enable or disable texture replacement.");
-            EnableLogging = plugin.Config.Bind("General", "Enable Logging", false, "Enable or disable logging.");
+            EnableSounds = plugin.Config.Bind("General", "Enable Sounds", true, "Enable or disable sound replacement.");
+            EnableLogging = plugin.Config.Bind("General", "Enable Logging", true, "Enable or disable logging.");
 #if DEBUG
             EnableDevMode = plugin.Config.Bind("Development", "Enable Dev Mode", false, "Enable development mode (scans and exports new posters). DISABLE FOR RELEASE!");
 #endif
             currect_lang = plugin.Config.Bind("General", "Currect Language", "SChinese", "The Language that currectly using.");
+            EnableFontReplacement = plugin.Config.Bind("General", "Enable Font Replacement", true, "Enable or disable font replacement feature. If enabled, then override font path must be set.");
             overrideFontPath = plugin.Config.Bind("General", "Override Font Path", "ch2", "Start from the mod asset folder, define a tmp font file path to load and replace in game font");
             
             _logger.LogInfo("Config loaded successfully.");
@@ -47,7 +51,17 @@ namespace BBPC.API
 
         public static bool IsLoggingEnabled()
         {
+            return EnableSounds.Value;
+        }
+
+        public static bool AreSoundsEnabled()
+        {
             return EnableLogging.Value;
+        }
+
+        public static bool IsFontReplacementEnabled()
+        {
+            return EnableFontReplacement.Value;
         }
 #if DEBUG
         public static bool IsDevModeEnabled()

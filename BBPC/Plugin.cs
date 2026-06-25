@@ -49,6 +49,7 @@ namespace BBPC
     public class Plugin : BaseUnityPlugin
     {
         public static Plugin Instance { get; private set; } = null!;
+        public static Dictionary<string, AudioClip> AllClips { get; private set; } = new Dictionary<string, AudioClip>();
         private Harmony? harmonyInstance = null!;
         private string[] expectedGameVersions = ["0.14", "0.14.1", "0.14.2", "0.14.3"];
 
@@ -69,7 +70,9 @@ namespace BBPC
 
             API.Logger.Info($"插件 {BBPCTemp.ModName} 正在初始化...");
             API.Logger.Info($"纹理: {(ConfigManager.AreTexturesEnabled() ? "启用" : "禁用")}, " +
-                           $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}"
+                           $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}" +
+                           $"音频替换: {(ConfigManager.AreSoundsEnabled() ? "启用" : "禁用")}" +
+                           $"字体替换: {(ConfigManager.IsFontReplacementEnabled() ? "启用" : "禁用")}"
 #if DEBUG
                            + $"开发模式: {(ConfigManager.IsDevModeEnabled() ? "启用" : "禁用")}");
 #else
@@ -221,10 +224,46 @@ namespace BBPC
 
             string modPath = AssetLoader.GetModPath(this);
 
-            if (ConfigManager.currect_lang.Value != "English")
+            if (!BBPCTemp.is_eng)
             {
                 yield return "加载纹理中...";
                 ApplyAllTextures();
+
+                yield return "替换音频中";
+                if (ConfigManager.AreSoundsEnabled())
+                {
+                    string audiosPath = Path.Combine(modPath, "Audios", ConfigManager.currect_lang.Value);
+                    if (Directory.Exists(audiosPath))
+                    {
+                        API.Logger.Info($"Audio folder found: {audiosPath}, caching and replacing...");
+
+                        string[] audioFiles = Directory.GetFiles(audiosPath, "*.wav").Concat(Directory.GetFiles(audiosPath, "*.ogg")).ToArray();
+                        foreach (string audioFile in audioFiles)
+                        {
+                            string clipName = Path.GetFileNameWithoutExtension(audioFile);
+                            if (!AllClips.ContainsKey(clipName))
+                            {
+                                AudioClip newClip = AssetLoader.AudioClipFromFile(audioFile);
+                                if (newClip)
+                                {
+                                    newClip.name = clipName;
+                                    AllClips.Add(clipName, newClip);
+                                    API.Logger.Info($"Audio clip '{clipName}' cached.");
+                                }
+                            }
+                        }
+
+                        SoundObject[] allSounds = Resources.FindObjectsOfTypeAll<SoundObject>();
+                        foreach (SoundObject soundObject in allSounds)
+                        {
+                            if (AllClips.TryGetValue(soundObject.name, out AudioClip newClip))
+                            {
+                                soundObject.soundClip = newClip;
+                                API.Logger.Info($"Sound '{soundObject.name}' replaced.");
+                            }
+                        }
+                    }
+                }
 
                 yield return "更新海报中...";
                 UpdatePosters(modPath);
@@ -244,6 +283,7 @@ namespace BBPC
 
         private void RegisterFallbackFont(TMP_FontAsset font)
         {
+            if (!ConfigManager.IsFontReplacementEnabled()) return;
             if (font == null) return;
 
             var fallbackList = TMP_Settings.fallbackFontAssets;
