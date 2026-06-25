@@ -50,7 +50,7 @@ namespace BBPC
     {
         public static Plugin Instance { get; private set; } = null!;
         private Harmony? harmonyInstance = null!;
-        private string[] expectedGameVersions = ["0.14", "0.14.1", "0.14.2"];
+        private string[] expectedGameVersions = ["0.14", "0.14.1", "0.14.2", "0.14.3"];
 
         private static readonly string[] menuTextureNames =
         {
@@ -63,6 +63,7 @@ namespace BBPC
         private void Awake()
         {
             Instance = this;
+
             API.Logger.Init(Logger);
             ConfigManager.Initialize(this, Logger);
 
@@ -85,10 +86,7 @@ namespace BBPC
 
             VersionCheck.CheckGameVersion(expectedGameVersions);
 
-            if (ConfigManager.currect_lang.Value != "English")
-            {
-                RegisterFallbackFont(FontHelper.GetTextMeshProFont());
-            }
+            RegisterFallbackFont(FontHelper.GetTextMeshProFont());
 
             string modPath = AssetLoader.GetModPath(this);
             string langPath = Path.Combine(modPath, "Language", ConfigManager.currect_lang.Value);

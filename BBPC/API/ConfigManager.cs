@@ -105,7 +105,7 @@ namespace BBPC.API
             nextButton.OnPress = new UnityEngine.Events.UnityEvent();
             nextButton.OnPress.AddListener(() => changeLang(true));
             nextButton.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
-            string langNotice = Plugin.Instance.GetTranslationKey("BBPC_LangNotice", "注意：繁体中文目前仍然处于测试阶段\n如遇到问题请提出！");
+            string langNotice = Plugin.Instance.GetTranslationKey("BBPC_LangNotice", "注意：繁體中文目前處於測試階段\n如遇到問題請提出！", "TChinese", true);
             try
             {
                 AddTooltip(previousButton, langNotice);
