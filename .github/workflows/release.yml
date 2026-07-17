@@ -60,7 +60,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        branch: [feat/challengejar, feat/template, feat/ModManager, feat/pluslevelstudio, feat/nullstyle]
+        branch: [feat/challengejar, feat/template, feat/ModManager, feat/pluslevelstudio, feat/nullstyle, feat/texturepack]
         include:
           - branch: feat/challengejar
             name: BBPC.ChallengeJarExtension.dll
@@ -72,6 +72,8 @@ jobs:
             name: BBPC.PlusLevelStudioExtension.dll
           - branch: feat/nullstyle
             name: BBPC.NULLStyleExtension.dll
+          - branch: feat/texturepack
+            name: BBPC.TextureExtension.dll
     steps:
       - uses: actions/checkout@v4
         with:
