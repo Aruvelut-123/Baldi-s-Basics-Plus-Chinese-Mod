@@ -290,25 +290,28 @@ namespace BBPC
 
             if (fallbackList == null)
             {
-                API.Logger.Warning("TMP_Settings.fallbackFontAssets is null, creating new list.");
-                fallbackList = new List<TMP_FontAsset>();
-                // 通过反射设置回去（某些版本可能为只读）
-                var prop = typeof(TMP_Settings).GetProperty("fallbackFontAssets");
-                prop?.SetValue(null, fallbackList);
+                API.Logger.Warning("TMP_Settings.fallbackFontAssets is null");
+                return;
             }
 
             if (!fallbackList.Contains(font))
             {
-                try
+                fallbackList.Add(font);
+                API.Logger.Info($"添加成功！当前 fallback 列表数量: {fallbackList.Count}");
+
+                // 打印所有 fallback 字体名称
+                foreach (var f in fallbackList)
                 {
-                    TMP_Settings.fallbackFontAssets.Add(font);
-                    API.Logger.Info($"Registered '{font.name}' to TMP_Settings.fallbackFontAssets");
-                }
-                catch
-                {
-                    fallbackList.Add(font);
+                    API.Logger.Info($"  - {f?.name ?? "null"}");
                 }
             }
+            else
+            {
+                API.Logger.Info($"字体已存在于 fallback 列表中");
+            }
+
+            bool stillExists = fallbackList.Contains(font);
+            API.Logger.Info($"字体是否仍在列表中: {stillExists}");
         }
 
         public void ApplyMenuTextures()

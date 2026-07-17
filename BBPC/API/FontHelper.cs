@@ -78,7 +78,7 @@ namespace BBPC.API
                 // ===== 处理加载结果 =====
                 if (font != null)
                 {
-                    Logger.Info($"✅ 字体加载成功: {font.name}");
+                    Logger.Info($"字体加载成功: {font.name}");
 
                     // 防止字体在场景切换时被销毁
                     GameObject.DontDestroyOnLoad(font);
@@ -88,7 +88,7 @@ namespace BBPC.API
                 }
                 else
                 {
-                    Logger.Error($"❌ 所有加载方式都失败，无法加载字体: {fontFileName}");
+                    Logger.Error($"所有加载方式都失败，无法加载字体: {fontFileName}");
                 }
 
                 return font;
