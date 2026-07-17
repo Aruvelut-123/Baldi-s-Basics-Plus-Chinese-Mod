@@ -69,10 +69,10 @@ namespace BBPC
             ConfigManager.Initialize(this, Logger);
 
             API.Logger.Info($"插件 {BBPCTemp.ModName} 正在初始化...");
-            API.Logger.Info($"纹理: {(ConfigManager.AreTexturesEnabled() ? "启用" : "禁用")}, " +
-                           $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}" +
-                           $"音频替换: {(ConfigManager.AreSoundsEnabled() ? "启用" : "禁用")}" +
-                           $"字体替换: {(ConfigManager.IsFontReplacementEnabled() ? "启用" : "禁用")}"
+            API.Logger.Info($"纹理: {(ConfigManager.AreTexturesEnabled() ? "启用" : "禁用")}\n" +
+                           $"日志记录: {(ConfigManager.IsLoggingEnabled() ? "启用" : "禁用")}\n" +
+                           $"音频替换: {(ConfigManager.AreSoundsEnabled() ? "启用" : "禁用")}\n" +
+                           $"字体替换: {(ConfigManager.IsFontReplacementEnabled() ? "启用" : "禁用")}\n"
 #if DEBUG
                            + $"开发模式: {(ConfigManager.IsDevModeEnabled() ? "启用" : "禁用")}");
 #else
