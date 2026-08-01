@@ -51,12 +51,12 @@ namespace BBPC.API
 
         public static bool IsLoggingEnabled()
         {
-            return EnableSounds.Value;
+            return EnableLogging.Value;
         }
 
         public static bool AreSoundsEnabled()
         {
-            return EnableLogging.Value;
+            return EnableSounds.Value;
         }
 
         public static bool IsFontReplacementEnabled()
@@ -83,6 +83,7 @@ namespace BBPC.API
 
         public override void Build()
         {
+            languages.Clear();
             string mod_path = AssetLoader.GetModPath(Plugin.Instance);
             string langsPath = Path.Combine(mod_path, "Language");
             string langPath = Path.Combine(langsPath, ConfigManager.currect_lang.Value);
@@ -103,6 +104,11 @@ namespace BBPC.API
                 }
             }
             current = ConfigManager.currect_lang.Value;
+            if (languages.Count == 0)
+            {
+                languages.Add(current);
+                API.Logger.Warning($"No language directories were found in: {langsPath}");
+            }
             API.Logger.Debug("Current language: " + current);
             API.Logger.Debug("Language list: " + languages.ToArray().ToString());
             index = languages.IndexOf(current);
@@ -136,6 +142,11 @@ namespace BBPC.API
 
         private void changeLang(bool is_next)
         {
+            if (languages.Count == 0)
+            {
+                return;
+            }
+
             if (is_next) index++;
             else index--;
             if (index < 0) index = languages.Count - 1;
@@ -175,4 +186,4 @@ namespace BBPC.API
             }
         }
     }
-} 
+}
