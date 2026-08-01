@@ -39,7 +39,8 @@
     <PackageReference Include="BepInEx.BaseLib" Version="5.4.21" />
     <PackageReference Include="BepInEx.Core" Version="5.4.21" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
-    <PackageReference Include="HarmonyX" Version="2.16.1" />
+    <!-- Keep this aligned with the HarmonyX version bundled with BepInEx. -->
+    <PackageReference Include="HarmonyX" Version="2.9.0" />
     <PackageReference Include="System.ValueTuple" Version="4.6.2" />
     <PackageReference Include="UnityEngine.Modules" Version="2020.3.49" IncludeAssets="compile" />
   </ItemGroup>
