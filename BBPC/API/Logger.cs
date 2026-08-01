@@ -1,6 +1,6 @@
 using BepInEx.Logging;
 
-namespace BBPC.ExtensionTemplate.API
+namespace BBPC.ModManagerExtension.API
 {
     internal static class Logger
     {

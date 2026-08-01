@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
-    <AssemblyName>BBPC.ExtensionTemplate</AssemblyName>
-    <Product>Baldi's Basics Plus Chinese Pack Support - Extension Template</Product>
+    <AssemblyName>BBPC.ModManagerExtension</AssemblyName>
+    <Product>Baldi's Basics Plus Chinese Pack Support - Mod Manager Extension</Product>
     <Version>1.0.0</Version>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>
@@ -11,7 +11,7 @@
       https://nuget.bepinex.dev/v3/index.json;
       https://nuget.samboy.dev/v3/index.json
     </RestoreAdditionalProjectSources>
-    <RootNamespace>BBPC.ExtensionTemplate</RootNamespace>
+    <RootNamespace>BBPC.ModManagerExtension</RootNamespace>
     <Nullable>enable</Nullable>
     <BaseOutputPath>Build\</BaseOutputPath>
     <Authors>Baymaxawa</Authors>
@@ -67,6 +67,9 @@
     </Reference>
     <Reference Include="MTM101BaldAPI">
       <HintPath>..\Dlls\MTM101BaldAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="ModManager">
+      <HintPath>..\Dlls\ModManager.dll</HintPath>
     </Reference>
     <Reference Include="netstandard">
       <HintPath>..\Dlls\netstandard.dll</HintPath>
