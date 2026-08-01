@@ -4,133 +4,190 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+  NUGET_PACKAGES: ${{ github.workspace }}\.nuget\packages
+
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 15
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: 5.0
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build -c Release --no-restore
-    - name: Get Precise UTC Timestamp
-      id: get-date
-      shell: bash
-      run: echo "timestamp=$(date -u +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
-    - name: Save BBPC.dll to cache (fresh every run)
-      uses: actions/cache/save@v5
-      with:
-        path: ./BBPC/Build/Release/BBPC.dll
-        key: bbpc-release-dll-${{ runner.os }}-${{ steps.get-date.outputs.timestamp }}
-    - name: Upload DLL and Dependencies to Release
-      uses: softprops/action-gh-release@v2.2.2
-      with:
-        files: |
-          ./BBPC/Build/Release/BBPC.dll
-          ./Dlls/MonoMod.Backports.dll
-          ./Dlls/MonoMod.ILHelpers.dll
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-release-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-main-
+            nuget-${{ runner.os }}-
+
+      - name: Restore dependencies
+        run: dotnet restore BBPC.sln
+
+      - name: Build
+        run: dotnet build BBPC.sln -c Release --no-restore
+
+      - name: Upload BBPC.dll for dependent jobs
+        uses: actions/upload-artifact@v7
+        with:
+          name: BBPC-release-dll
+          path: ./BBPC/Build/Release/BBPC.dll
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload release dependencies
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-dependencies
+          path: |
+            ./Dlls/MonoMod.Backports.dll
+            ./Dlls/MonoMod.ILHelpers.dll
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+
   changelog:
     runs-on: ubuntu-latest
-    continue-on-error: true
+    timeout-minutes: 10
     steps:
-      - name: Checkout all
-        uses: actions/checkout@v4
+      - name: Checkout all history
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      
+
       - name: Install git-cliff
         uses: taiki-e/install-action@git-cliff
 
       - name: Generate changelog
-        run: git-cliff >> CHANGELOG.md
+        run: git-cliff > CHANGELOG.md
 
-      - name: Add changelog to release
-        uses: softprops/action-gh-release@v2.2.2
+      - name: Upload changelog
+        uses: actions/upload-artifact@v7
         with:
-          tag_name: ${{ github.event.release.tag_name }}
-          body_path: CHANGELOG.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: release-changelog
+          path: CHANGELOG.md
+          if-no-files-found: error
+          retention-days: 1
+
   build-extensions:
     runs-on: windows-latest
     needs: build
+    timeout-minutes: 15
     strategy:
       matrix:
-        branch: [feat/challengejar, feat/template, feat/ModManager, feat/pluslevelstudio, feat/nullstyle, feat/texturepack]
         include:
           - branch: feat/challengejar
             name: BBPC.ChallengeJarExtension.dll
+            file: BBPC.ChallengeJarExtension.dll
           - branch: feat/template
             name: BBPC.ExtensionTemplate.dll
+            file: BBPC.ExtensionTemplate.dll
           - branch: feat/ModManager
             name: BBPC.ModManagerExtension.dll
+            file: BBPC.ModManagerExtension.dll
           - branch: feat/pluslevelstudio
             name: BBPC.PlusLevelStudioExtension.dll
+            file: BBPC.EditorExtension.dll
           - branch: feat/nullstyle
             name: BBPC.NULLStyleExtension.dll
+            file: BBPC.NULLStyleExtension.dll
           - branch: feat/texturepack
             name: BBPC.TextureExtension.dll
+            file: BBPC.TextureExtension.dll
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ matrix.branch }}
-      - name: Get Precise UTC Timestamp
-        id: get-date
-        shell: bash
-        run: echo "timestamp=$(date -u +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
-      - name: Restore BBPC.dll from cache
-        uses: actions/cache/restore@v5
+
+      - name: Download BBPC.dll from this workflow
+        uses: actions/download-artifact@v7
         with:
-          path: ./BBPC/Build/Release/BBPC.dll
-          key: bbpc-release-dll-${{ runner.os }}-${{ steps.get-date.outputs.timestamp }}
-          restore-keys: |
-            bbpc-release-dll-${{ runner.os }}-
-      - name: Copy BBPC.dll to Dlls folder for extension projects
-        run: |
-          cp ./BBPC/Build/Release/BBPC.dll ./Dlls/BBPC.dll
-        shell: bash
-      - name: Verify BBPC.dll hash matches (source vs copied)
-        shell: pwsh   # PowerShell (recommended on Windows runners)
-        run: |
-          $sourcePath = "./BBPC/Build/Release/BBPC.dll"
-          $copiedPath = "./Dlls/BBPC.dll"
+          name: BBPC-release-dll
+          path: ./Dlls
 
-          if (-Not (Test-Path $sourcePath)) {
-            Write-Error "Source BBPC.dll not found at $sourcePath"
-            exit 1
-          }
-
-          if (-Not (Test-Path $copiedPath)) {
-            Write-Error "Copied BBPC.dll not found at $copiedPath"
-            exit 1
-          }
-
-          $sourceHash = (Get-FileHash $sourcePath -Algorithm SHA256).Hash
-          $copiedHash = (Get-FileHash $copiedPath -Algorithm SHA256).Hash
-
-          Write-Host "Source BBPC.dll hash: $sourceHash"
-          Write-Host "Copied BBPC.dll hash: $copiedHash"
-
-          if ($sourceHash -ne $copiedHash) {
-            Write-Error "ERROR: Hash mismatch! The copied BBPC.dll does not match the source."
-            Write-Error "This usually means the copy operation failed or the file was corrupted."
-            exit 1
-          }
-
-          Write-Host "✅ Success: Both BBPC.dll files have matching hashes."
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 5.0
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-${{ matrix.branch }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-${{ matrix.branch }}-
+            nuget-${{ runner.os }}-main-
+            nuget-${{ runner.os }}-
+
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore BBPC.sln
+
       - name: Build
-        run: dotnet build -c Release --no-restore
-      - name: Upload a Build Artifact
-        uses: softprops/action-gh-release@v2.2.2
+        run: dotnet build BBPC.sln -c Release --no-restore
+
+      - name: Upload extension for publishing
+        uses: actions/upload-artifact@v7
         with:
-          files: ./BBPC/Build/Release/BBPC.*.dll
+          name: release-extension-${{ matrix.name }}
+          path: ./BBPC/Build/Release/${{ matrix.file }}
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: [build, changelog, build-extensions]
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download BBPC.dll
+        uses: actions/download-artifact@v7
+        with:
+          name: BBPC-release-dll
+          path: ./release-assets/core
+
+      - name: Download dependencies
+        uses: actions/download-artifact@v7
+        with:
+          name: release-dependencies
+          path: ./release-assets/core
+
+      - name: Download extensions
+        uses: actions/download-artifact@v7
+        with:
+          pattern: release-extension-*
+          path: ./release-assets/extensions
+          merge-multiple: true
+
+      - name: Download changelog
+        uses: actions/download-artifact@v7
+        with:
+          name: release-changelog
+          path: ./release-assets/changelog
+
+      - name: Publish release assets and changelog
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.event.release.tag_name }}
+          body_path: ./release-assets/changelog/CHANGELOG.md
+          fail_on_unmatched_files: true
+          files: |
+            ./release-assets/core/*.dll
+            ./release-assets/extensions/*.dll

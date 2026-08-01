@@ -1,132 +1,140 @@
-name: Build for pushes and PR
+name: Build for pushes and PRs
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
     paths-ignore:
-      - 'README.md'
-      - '.gitignore'
       - '**/*.md'
+      - '.gitignore'
+      - '.github/dependabot.yml'
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
     paths-ignore:
-      - 'README.md'
-      - '.gitignore'
       - '**/*.md'
+      - '.gitignore'
+      - '.github/dependabot.yml'
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+  NUGET_PACKAGES: ${{ github.workspace }}\.nuget\packages
 
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 15
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: 5.0
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build -c DEBUG --no-restore
-    - name: Get Precise UTC Timestamp
-      id: get-date
-      shell: bash
-      run: echo "timestamp=$(date -u +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
-    - name: Save BBPC.dll to cache (fresh every run)
-      uses: actions/cache/save@v5
-      with:
-        path: ./BBPC/Build/Debug/BBPC.dll
-        key: bbpc-dll-${{ runner.os }}-${{ steps.get-date.outputs.timestamp }}
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v6.0.0
-      with:
-        name: BBPC.dll
-        path: ./BBPC/Build/Debug/BBPC.dll
-    - name: Upload Dependencies
-      uses: actions/upload-artifact@v6.0.0
-      with:
-        name: Dependencies.zip
-        path: |
-          ./Dlls/MonoMod.Backports.dll
-          ./Dlls/MonoMod.ILHelpers.dll
-        compression-level: 0
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-main-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-main-
+            nuget-${{ runner.os }}-
+
+      - name: Restore dependencies
+        run: dotnet restore BBPC.sln
+
+      - name: Build
+        run: dotnet build BBPC.sln -c Debug --no-restore
+
+      - name: Upload BBPC.dll
+        uses: actions/upload-artifact@v7
+        with:
+          name: BBPC.dll
+          path: ./BBPC/Build/Debug/BBPC.dll
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload dependencies
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: Dependencies.zip
+          path: |
+            ./Dlls/MonoMod.Backports.dll
+            ./Dlls/MonoMod.ILHelpers.dll
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
   build-extensions:
     runs-on: windows-latest
     needs: build
+    timeout-minutes: 15
     strategy:
       matrix:
-        branch: [feat/challengejar, feat/template, feat/ModManager, feat/pluslevelstudio, feat/nullstyle, feat/texturepack]
         include:
           - branch: feat/challengejar
             name: BBPC.ChallengeJarExtension.dll
+            file: BBPC.ChallengeJarExtension.dll
           - branch: feat/template
             name: BBPC.ExtensionTemplate.dll
+            file: BBPC.ExtensionTemplate.dll
           - branch: feat/ModManager
             name: BBPC.ModManagerExtension.dll
+            file: BBPC.ModManagerExtension.dll
           - branch: feat/pluslevelstudio
             name: BBPC.PlusLevelStudioExtension.dll
+            file: BBPC.EditorExtension.dll
           - branch: feat/nullstyle
             name: BBPC.NULLStyleExtension.dll
+            file: BBPC.NULLStyleExtension.dll
           - branch: feat/texturepack
             name: BBPC.TextureExtension.dll
+            file: BBPC.TextureExtension.dll
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ matrix.branch }}
-      - name: Get Precise UTC Timestamp
-        id: get-date
-        shell: bash
-        run: echo "timestamp=$(date -u +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
-      - name: Restore BBPC.dll from cache
-        uses: actions/cache/restore@v5
+
+      - name: Download BBPC.dll from this workflow
+        uses: actions/download-artifact@v7
         with:
-          path: ./BBPC/Build/Debug/BBPC.dll
-          key: bbpc-dll-${{ runner.os }}-${{ steps.get-date.outputs.timestamp }}
-          restore-keys: |
-            bbpc-dll-${{ runner.os }}-
-      - name: Copy BBPC.dll to Dlls folder for extension projects
-        run: |
-          cp ./BBPC/Build/Debug/BBPC.dll ./Dlls/BBPC.dll
-        shell: bash
-      - name: Verify BBPC.dll hash matches (source vs copied)
-        shell: pwsh   # PowerShell (recommended on Windows runners)
-        run: |
-          $sourcePath = "./BBPC/Build/Debug/BBPC.dll"
-          $copiedPath = "./Dlls/BBPC.dll"
+          name: BBPC.dll
+          path: ./Dlls
 
-          if (-Not (Test-Path $sourcePath)) {
-            Write-Error "Source BBPC.dll not found at $sourcePath"
-            exit 1
-          }
-
-          if (-Not (Test-Path $copiedPath)) {
-            Write-Error "Copied BBPC.dll not found at $copiedPath"
-            exit 1
-          }
-
-          $sourceHash = (Get-FileHash $sourcePath -Algorithm SHA256).Hash
-          $copiedHash = (Get-FileHash $copiedPath -Algorithm SHA256).Hash
-
-          Write-Host "Source BBPC.dll hash: $sourceHash"
-          Write-Host "Copied BBPC.dll hash: $copiedHash"
-
-          if ($sourceHash -ne $copiedHash) {
-            Write-Error "ERROR: Hash mismatch! The copied BBPC.dll does not match the source."
-            Write-Error "This usually means the copy operation failed or the file was corrupted."
-            exit 1
-          }
-
-          Write-Host "✅ Success: Both BBPC.dll files have matching hashes."
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 5.0
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-${{ matrix.branch }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-${{ matrix.branch }}-
+            nuget-${{ runner.os }}-main-
+            nuget-${{ runner.os }}-
+
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore BBPC.sln
+
       - name: Build
-        run: dotnet build -c DEBUG --no-restore
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v6.0.0
+        run: dotnet build BBPC.sln -c Debug --no-restore
+
+      - name: Upload extension
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.name }}
-          path: ./BBPC/Build/Debug/BBPC.*.dll
+          path: ./BBPC/Build/Debug/${{ matrix.file }}
+          if-no-files-found: error
+          retention-days: 7
