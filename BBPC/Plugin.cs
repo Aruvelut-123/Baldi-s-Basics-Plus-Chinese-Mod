@@ -50,7 +50,7 @@ namespace BBPC
     {
         public static Plugin Instance { get; private set; } = null!;
         public static Dictionary<string, AudioClip> AllClips { get; private set; } = new Dictionary<string, AudioClip>();
-        private Harmony? harmonyInstance = null!;
+        private Harmony? harmonyInstance;
         private string[] expectedGameVersions = ["0.14", "0.14.1", "0.14.2", "0.14.3", "0.14.4"];
 
         private static readonly string[] menuTextureNames =
@@ -82,13 +82,13 @@ namespace BBPC
                            );
 #endif
 
-            Harmony harmony = new Harmony(BBPCTemp.ModGUID);
+            harmonyInstance = new Harmony(BBPCTemp.ModGUID);
 
-            MainLoadTranspiler.Apply(harmony);
+            MainLoadTranspiler.Apply(harmonyInstance);
 
             new Credit(this);
 
-            harmony.PatchAll();
+            harmonyInstance.PatchAll();
 
             VersionCheck.CheckGameVersion(expectedGameVersions);
 
@@ -453,13 +453,18 @@ namespace BBPC
             API.Logger.Info("海报更新完成。");
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
+            CustomOptionsCore.OnMenuInitialize -= OnMenu;
+
             if (harmonyInstance != null)
             {
                 harmonyInstance.UnpatchSelf();
                 harmonyInstance = null;
             }
+
+            translationsByLanguage.Clear();
+            AllClips.Clear();
         }
     }
 }
