@@ -1,7 +1,7 @@
-# BBPC Extension Template
+# BBPC Plus Level Studio Extension
 
-This branch is the standalone base for BBPC extension branches. It builds a
-BepInEx plugin that depends on BBPC without copying the main BBPC source tree.
+This branch extends BBPC localization support for Plus Level Studio and is
+based directly on `feat/template`.
 
 ## Create an extension
 
