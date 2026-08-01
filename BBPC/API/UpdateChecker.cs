@@ -1,8 +1,9 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace BBPC.API
 {
@@ -11,6 +12,9 @@ namespace BBPC.API
         private const string RepoOwner = "Aruvelut-123";
         private const string RepoName = "Baldi-s-Basics-Plus-Chinese-Mod";
         private const string UpdateUrl = "https://gamebanana.com/mods/updates/610816";
+        private static readonly Uri ReleasesApiUrl =
+            new Uri($"https://api.github.com/repos/{RepoOwner}/{RepoName}/releases/latest");
+        private static readonly HttpClient HttpClient = CreateHttpClient();
 
         public static bool IsUpdateAvailable { get; private set; } = false;
         public static string LatestVersionString { get; private set; } = string.Empty;
@@ -29,70 +33,55 @@ namespace BBPC.API
 
             try
             {
-                using (HttpClient client = new HttpClient())
+                using (HttpResponseMessage response = await HttpClient.GetAsync(ReleasesApiUrl))
                 {
-                    client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("BBPCUpdateChecker", "1.0"));
-
-                    string url = $"https://api.github.com/repos/{RepoOwner}/{RepoName}/releases/latest";
-                    HttpResponseMessage response = await client.GetAsync(url);
-
-                    if (response.IsSuccessStatusCode)
+                    if (!response.IsSuccessStatusCode)
                     {
-                        string jsonResponse = await response.Content.ReadAsStringAsync();
+                        Logger.Warning($"检查更新失败，GitHub 返回状态码 {(int)response.StatusCode} ({response.StatusCode})。");
+                        return;
+                    }
 
-                        Regex tagRegex = new Regex("\"tag_name\"\\s*:\\s*\"([^\"]+)\"");
-                        Match match = tagRegex.Match(jsonResponse);
+                    string jsonResponse = await response.Content.ReadAsStringAsync();
+                    string? latestVersionTag = JObject.Parse(jsonResponse).Value<string>("tag_name");
+                    if (latestVersionTag == null || latestVersionTag.Trim().Length == 0)
+                    {
+                        Logger.Warning("检查更新失败，GitHub 响应中缺少版本标签。");
+                        return;
+                    }
 
-                        if (match.Success && match.Groups.Count >= 2)
-                        {
-                            string latestVersionTag = match.Groups[1].Value;
+                    if (!Version.TryParse(CurrentVersionString, out Version currentVersion) ||
+                        !Version.TryParse(latestVersionTag.TrimStart('v', 'V'), out Version latestVersion))
+                    {
+                        Logger.Warning($"无法比较模组版本：当前版本 '{CurrentVersionString}'，最新版本 '{latestVersionTag}'。");
+                        return;
+                    }
 
-                            if (!string.IsNullOrEmpty(latestVersionTag))
-                            {
-                                //  Logger.Info($"GitHub 上的最新版本 ({RepoOwner}/{RepoName}): {latestVersionTag}");
-                                Version currentModVersion = new Version(CurrentVersionString);
-                                string sanitizedLatestVersion = latestVersionTag.StartsWith("v") ? latestVersionTag.Substring(1) : latestVersionTag;
-
-                                try
-                                {
-                                    Version latestGitHubVersion = new Version(sanitizedLatestVersion);
-
-                                    if (latestGitHubVersion > currentModVersion)
-                                    {
-                                        Logger.Warning($"模组有新版本可用: {latestVersionTag}! 当前版本: v{CurrentVersionString}");
-                                        IsUpdateAvailable = true;
-                                        LatestVersionString = latestVersionTag;
-                                    }
-                                    else
-                                    {
-                                        Logger.Info("已安装最新版本模组。");
-                                    }
-                                }
-                                catch (Exception)
-                                {
-                                    //  Logger.Error($"版本比较时出错: {ex.Message}");
-                                }
-                            }
-                            else
-                            {
-                                //  Logger.Error("从 GitHub API 响应中获取到空版本标签。");
-                            }
-                        }
-                        else
-                        {
-                            // Logger.Error("在 GitHub API 响应中未找到版本标签。");
-                        }
+                    if (latestVersion > currentVersion)
+                    {
+                        Logger.Warning($"模组有新版本可用: {latestVersionTag}! 当前版本: v{CurrentVersionString}");
+                        IsUpdateAvailable = true;
+                        LatestVersionString = latestVersionTag;
                     }
                     else
                     {
-                        // Logger.Error($"GitHub API 请求失败 ({RepoOwner}/{RepoName}): {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
+                        Logger.Info("已安装最新版本模组。");
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex) when (ex is HttpRequestException || ex is JsonException || ex is TaskCanceledException)
             {
-                // Logger.Error($"检查更新时出现异常: {ex.Message}\n{ex.StackTrace}");
+                Logger.Warning($"检查更新失败: {ex.Message}");
             }
+        }
+
+        private static HttpClient CreateHttpClient()
+        {
+            HttpClient client = new HttpClient
+            {
+                Timeout = TimeSpan.FromSeconds(15)
+            };
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("BBPCUpdateChecker", "1.0"));
+            return client;
         }
     }
 }
