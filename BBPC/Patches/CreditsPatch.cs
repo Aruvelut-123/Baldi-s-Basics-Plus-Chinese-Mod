@@ -62,28 +62,45 @@ namespace BBPC.Patches
             {
                 if (__instance.screens != null && __instance.screens.Count > 0)
                 {
-                    JObject credit_json = Credit.credit_json;
+                    JArray? pages = Credit.credit_json["pages"] as JArray;
+                    if (pages == null)
+                    {
+                        API.Logger.Error("Credits data does not contain a pages array.");
+                        return;
+                    }
+
                     int num = 0;
                     int num2 = 1;
                     GameObject gameObject = __instance.screens[0].gameObject;
                     API.Logger.Info("Get first screen object: " + gameObject.name);
-                    foreach (JToken jtoken in credit_json["pages"])
+                    foreach (JToken jtoken in pages)
                     {
                         JObject jobject = (JObject)jtoken;
+                        JArray? lines = jobject["text"] as JArray;
+                        if (lines == null)
+                        {
+                            API.Logger.Warning("Skipping a credits page without a text array.");
+                            continue;
+                        }
+
                         GameObject gameObject2 = GameObject.Instantiate(gameObject, gameObject.transform);
                         gameObject2.name = "ExtraCreditsScreen(" + num.ToString() + ")";
                         TMP_Text[] componentsInChildren = gameObject2.GetComponentsInChildren<TMP_Text>();
                         if (componentsInChildren != null && componentsInChildren.Length != 0)
                         {
                             TMP_Text tmp_Text = componentsInChildren[0];
-                            GameObject.Destroy(componentsInChildren[1]);
+                            if (componentsInChildren.Length > 1)
+                            {
+                                GameObject.Destroy(componentsInChildren[1]);
+                            }
+
                             string text = "";
                             string text2 = "";
                             foreach (string text3 in Credit.sponsers)
                             {
                                 text2 = text2 + text3 + "\n";
                             }
-                            foreach (JToken jtoken2 in jobject["text"])
+                            foreach (JToken jtoken2 in lines)
                             {
                                 if (jtoken2.ToString().Contains("{AFDIAN_SPONSERS}"))
                                 {
@@ -262,9 +279,9 @@ namespace BBPC.Patches
     public class Credit
     {
         private string mod_path;
-        private string credits_page = null;
+        private string credits_page = string.Empty;
         private string credits_default = "{\r\n    \"pages\": [\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组</b>\",\r\n                \"\\n\",\r\n                \"汉化模组/安装程序:\",\r\n                \"Baymaxawa\",\r\n                \"文本/贴图汉化:\",\r\n                \"MMZ\"\r\n            ]\r\n        },\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组</b>\",\r\n                \"\\n\",\r\n                \"润色: 馒\\n\",\r\n                \"TMP字体: cgq\\n\",\r\n                \"特别鸣谢: ChatGPT、Deepseek\"\r\n            ]\r\n        },\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组</b>\",\r\n                \"\\n\",\r\n                \"感谢所有在群内参与测试和提供的人员!\",\r\n                \"没有你们很难做到这里!\"\r\n            ]\r\n        },\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组 赞助人员名单</b>\",\r\n                \"\\n\",\r\n                \"{AFDIAN_SPONSERS}\"\r\n            ]\r\n        }\r\n    ]\r\n}";
-        public static JObject credit_json;
+        public static JObject credit_json = new JObject();
         public static string[] sponsers = new string[] { "爱发电用户_e57b1", "爱发电用户_40217", "Mrothen" };
 
         public Credit(Plugin plug)

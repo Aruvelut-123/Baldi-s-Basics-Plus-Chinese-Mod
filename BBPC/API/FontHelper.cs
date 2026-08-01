@@ -12,13 +12,13 @@ namespace BBPC.API
 {
     public class FontHelper
     {
-        private static TMP_FontAsset _cachedFont = null;
+        private static TMP_FontAsset? _cachedFont;
         private static readonly object _lock = new object();
 
         /// <summary>
         /// 获取 TMP 字体（带缓存）
         /// </summary>
-        public static TMP_FontAsset GetTextMeshProFont()
+        public static TMP_FontAsset? GetTextMeshProFont()
         {
             // 检查缓存
             if (_cachedFont != null)
@@ -38,7 +38,7 @@ namespace BBPC.API
                 }
 
                 string fontFileName = ConfigManager.overrideFontPath.Value;
-                TMP_FontAsset font = null;
+                TMP_FontAsset? font = null;
 
                 // ===== 策略1：从 AssetBundle 加载 =====
                 var overrideFontPath = Path.Combine(AssetLoader.GetModPath(Plugin.Instance), fontFileName);
@@ -98,7 +98,7 @@ namespace BBPC.API
         /// <summary>
         /// 从 AssetBundle 加载 TMP 字体
         /// </summary>
-        private static TMP_FontAsset LoadFromAssetBundle(string bundlePath)
+        private static TMP_FontAsset? LoadFromAssetBundle(string bundlePath)
         {
             try
             {
@@ -111,7 +111,7 @@ namespace BBPC.API
 
                 // 尝试加载所有 TMP_FontAsset
                 TMP_FontAsset[] allFonts = bundle.LoadAllAssets<TMP_FontAsset>();
-                TMP_FontAsset font = allFonts.FirstOrDefault();
+                TMP_FontAsset? font = allFonts.FirstOrDefault();
 
                 if (font == null)
                 {
@@ -156,7 +156,7 @@ namespace BBPC.API
         /// <summary>
         /// 从系统字体创建 TMP FontAsset
         /// </summary>
-        private static TMP_FontAsset CreateFromSystemFont(string fontName)
+        private static TMP_FontAsset? CreateFromSystemFont(string fontName)
         {
             try
             {
@@ -185,7 +185,7 @@ namespace BBPC.API
                 }
 
                 // 方法1：通过 Unity Font 对象创建
-                Font systemFont = Resources.FindObjectsOfTypeAll<Font>()
+                Font? systemFont = Resources.FindObjectsOfTypeAll<Font>()
                     .FirstOrDefault(f => f.name.Equals(fontName, StringComparison.OrdinalIgnoreCase));
 
                 if (systemFont != null)
@@ -274,7 +274,7 @@ namespace BBPC.API
         /// <summary>
         /// 获取已加载的字体（如果有）
         /// </summary>
-        public static TMP_FontAsset GetLoadedFont()
+        public static TMP_FontAsset? GetLoadedFont()
         {
             return _cachedFont;
         }

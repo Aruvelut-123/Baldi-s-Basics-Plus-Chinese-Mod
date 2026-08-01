@@ -280,7 +280,7 @@ namespace BBPC
             API.Logger.Info("资源加载完成！");
         }
 
-        private void RegisterFallbackFont(TMP_FontAsset font)
+        private void RegisterFallbackFont(TMP_FontAsset? font)
         {
             if (!ConfigManager.IsFontReplacementEnabled()) return;
             if (font == null) return;
