@@ -61,6 +61,9 @@ namespace BBPC
             "TempMenu_Low"
         };
 
+        private readonly Dictionary<string, Dictionary<string, string>> translationsByLanguage =
+            new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+
         private void Awake()
         {
             Instance = this;
@@ -109,31 +112,6 @@ namespace BBPC
             API.Logger.Info($"Mod {MyPluginInfo.PLUGIN_NAME} is loaded!");
         }
 
-        private static string JSON_SeleteNode(JToken json, string ReName)
-        {
-            try
-            {
-                string result = "";
-                //这里6.0版块可以用正则匹配
-                var node = json.SelectToken("$.." + ReName);
-                if (node != null)
-                {
-                    //判断节点类型
-                    if (node.Type == JTokenType.String || node.Type == JTokenType.Integer || node.Type == JTokenType.Float)
-                    {
-                        //返回string值
-                        object? value = node.Value<object>();
-                        if (value != null) result = value.ToString();
-                    }
-                }
-                return result;
-            }
-            catch (Exception)
-            {
-                return "";
-            }
-        }
-
         private void OnMenu(OptionsMenu menu, CustomOptionsHandler handler)
         {
             BBPCOptionsCategory category = handler.AddCategory<BBPCOptionsCategory>(GetTranslationKey("BBPC_Options_Title", "BBPC"));
@@ -141,49 +119,70 @@ namespace BBPC
 
         public string GetTranslationKey(string key, string default_obj, string lang="SChinese", bool custom_lang=false)
         {
-            if (lang != ConfigManager.currect_lang.Value && !custom_lang) lang = ConfigManager.currect_lang.Value;
-            string mod_path = AssetLoader.GetModPath(this);
-            string langPath = Path.Combine(mod_path, "Language", lang);
-            if (mod_path != null && mod_path != "")
+            if (!custom_lang)
             {
-                if (Directory.Exists(langPath))
+                lang = ConfigManager.currect_lang.Value;
+            }
+
+            Dictionary<string, string> translations = GetTranslations(lang);
+            return translations.TryGetValue(key, out string value) ? value : default_obj;
+        }
+
+        private Dictionary<string, string> GetTranslations(string language)
+        {
+            if (translationsByLanguage.TryGetValue(language, out Dictionary<string, string> cachedTranslations))
+            {
+                return cachedTranslations;
+            }
+
+            Dictionary<string, string> translations = new Dictionary<string, string>(StringComparer.Ordinal);
+            string languagePath = Path.Combine(AssetLoader.GetModPath(this), "Language", language);
+
+            if (Directory.Exists(languagePath))
+            {
+                try
                 {
-                    string[] json_files = Directory.GetFiles(langPath, "*.json", SearchOption.AllDirectories);
-                    API.Logger.Debug(json_files.ToArray().ToString());
-                    foreach (string json_file_path in json_files)
+                    foreach (string jsonFilePath in Directory.EnumerateFiles(languagePath, "*.json", SearchOption.AllDirectories))
                     {
-                        if (!json_file_path.Contains(lang)) continue;
-                        API.Logger.Debug(json_file_path);
-                        StreamReader file = File.OpenText(json_file_path);
-                        JsonTextReader reader = new JsonTextReader(file);
-                        JToken lang_json = (JObject)JToken.ReadFrom(reader);
-                        if (lang_json == null)
-                        {
-                            API.Logger.Error("Language File may corrpted! Path: " + json_file_path);
-                            return default_obj;
-                        }
                         try
                         {
-                            API.Logger.Debug(lang_json["items"].Values().ToString());
-                        } catch (NullReferenceException e)
-                        {
-                            API.Logger.Error("Language File may corrpted because it does not have items! Path: " + json_file_path);
-                            continue;
-                        }
-                        foreach (JToken item in lang_json["items"])
-                        {
-                            if (item["key"].ToString() == key)
+                            using (StreamReader file = File.OpenText(jsonFilePath))
+                            using (JsonTextReader reader = new JsonTextReader(file))
                             {
-                                API.Logger.Debug("Language File " + json_file_path + " contains " + key + " and the value is " + item["value"].ToString());
-                                return item["value"].ToString();
+                                JObject languageJson = JObject.Load(reader);
+                                JArray? items = languageJson["items"] as JArray;
+                                if (items == null)
+                                {
+                                    API.Logger.Error($"Language file does not contain an items array: {jsonFilePath}");
+                                    continue;
+                                }
+
+                                foreach (JObject item in items.OfType<JObject>())
+                                {
+                                    string? itemKey = item.Value<string>("key");
+                                    string? itemValue = item.Value<string>("value");
+                                    if (itemKey != null && itemKey.Length > 0 && itemValue != null && !translations.ContainsKey(itemKey))
+                                    {
+                                        translations.Add(itemKey, itemValue);
+                                    }
+                                }
                             }
                         }
-                        API.Logger.Debug("Language File " + json_file_path + " doesn't contains " + key);
-                        file.Close();
+                        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
+                        {
+                            API.Logger.Error($"Failed to load language file '{jsonFilePath}': {ex.Message}");
+                        }
                     }
                 }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                {
+                    API.Logger.Error($"Failed to scan language folder '{languagePath}': {ex.Message}");
+                }
             }
-            return default_obj;
+
+            translationsByLanguage.Add(language, translations);
+            API.Logger.Debug($"Cached {translations.Count} translations for language '{language}'.");
+            return translations;
         }
 
         public static T LoadAsset<T>(string name) where T : UnityEngine.Object
