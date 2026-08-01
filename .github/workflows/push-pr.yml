@@ -62,18 +62,6 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      - name: Upload dependencies
-        if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: Dependencies.zip
-          path: |
-            ./Dlls/MonoMod.Backports.dll
-            ./Dlls/MonoMod.ILHelpers.dll
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 7
-
   build-extensions:
     runs-on: windows-latest
     needs: build

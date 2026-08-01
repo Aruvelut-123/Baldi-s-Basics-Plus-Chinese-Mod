@@ -7,6 +7,9 @@ updates:
       day: monday
       time: '04:00'
       timezone: Asia/Shanghai
+    ignore:
+      # HarmonyX must match the version bundled with the supported BepInEx runtime.
+      - dependency-name: HarmonyX
     groups:
       minor-and-patch-updates:
         patterns:

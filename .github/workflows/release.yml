@@ -51,17 +51,6 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-      - name: Upload release dependencies
-        uses: actions/upload-artifact@v7
-        with:
-          name: release-dependencies
-          path: |
-            ./Dlls/MonoMod.Backports.dll
-            ./Dlls/MonoMod.ILHelpers.dll
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 1
-
   changelog:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -161,12 +150,6 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           name: BBPC-release-dll
-          path: ./release-assets/core
-
-      - name: Download dependencies
-        uses: actions/download-artifact@v7
-        with:
-          name: release-dependencies
           path: ./release-assets/core
 
       - name: Download extensions
