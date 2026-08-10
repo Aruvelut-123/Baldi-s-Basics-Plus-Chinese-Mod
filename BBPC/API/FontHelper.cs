@@ -156,7 +156,12 @@ namespace BBPC.API
                     }
                 }
 
-                if (font != null && !EnsureRenderableMaterial(font, compatibleShaders))
+                if (font != null)
+                {
+                    LogFontAssetDetails(font);
+                }
+
+                if (font != null && !EnsureRenderableMaterials(font, compatibleShaders, new HashSet<int>()))
                 {
                     Logger.Error($"字体 '{font.name}' 的材质在当前平台不可渲染");
                     font = null;
@@ -170,6 +175,41 @@ namespace BBPC.API
                 Logger.Error($"从 AssetBundle 加载字体失败: {ex.Message}");
                 return null;
             }
+        }
+
+        private static bool EnsureRenderableMaterials(TMP_FontAsset font, Shader[] compatibleShaders, HashSet<int> visitedFonts)
+        {
+            if (!visitedFonts.Add(font.GetInstanceID()))
+            {
+                return true;
+            }
+
+            bool renderable = EnsureRenderableMaterial(font, compatibleShaders);
+            if (font.fallbackFontAssetTable == null)
+            {
+                return renderable;
+            }
+
+            foreach (TMP_FontAsset fallbackFont in font.fallbackFontAssetTable)
+            {
+                if (fallbackFont == null)
+                {
+                    continue;
+                }
+
+                LogFontAssetDetails(fallbackFont);
+                renderable &= EnsureRenderableMaterials(fallbackFont, compatibleShaders, visitedFonts);
+            }
+
+            return renderable;
+        }
+
+        private static void LogFontAssetDetails(TMP_FontAsset font)
+        {
+            string sourceFont = font.sourceFontFile != null ? font.sourceFontFile.name : "none";
+            int characterCount = font.characterTable != null ? font.characterTable.Count : 0;
+            int fallbackCount = font.fallbackFontAssetTable != null ? font.fallbackFontAssetTable.Count : 0;
+            Logger.Info($"字体详情: source={sourceFont}, mode={font.atlasPopulationMode}, render={font.atlasRenderMode}, characters={characterCount}, fallbacks={fallbackCount}, atlases={font.atlasTextureCount}");
         }
 
         /// <summary>

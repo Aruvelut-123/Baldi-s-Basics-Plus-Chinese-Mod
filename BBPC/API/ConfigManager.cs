@@ -83,6 +83,7 @@ namespace BBPC.API
 
         public override void Build()
         {
+            SetupTooltipHotspots();
             languages.Clear();
             string mod_path = AssetLoader.GetModPath(Plugin.Instance);
             string langsPath = Path.Combine(mod_path, "Language");
@@ -112,6 +113,8 @@ namespace BBPC.API
             API.Logger.Debug("Current language: " + current);
             API.Logger.Debug("Language list: " + languages.ToArray().ToString());
             index = languages.IndexOf(current);
+            string langNotice = Plugin.Instance.GetTranslationKey("BBPC_LangNotice", "注意：繁體中文目前處於測試階段\n如遇到問題請提出！", "TChinese", true);
+            LangNotice = CreateText("LangNotice", langNotice, new Vector2(0, 65), BaldiFonts.ComicSans18, TextAlignmentOptions.Center, new Vector2(300, 50), Color.red);
             LangTip = CreateText("LangTip", "Please select the language\nthat you want to apply.", new Vector2(0, -30), BaldiFonts.ComicSans24, TextAlignmentOptions.Center, Vector2.one, Color.black);
             TextLocalizer localizer = LangTip.gameObject.AddComponent<TextLocalizer>();
             localizer.key = "BBPC_LangTip";
@@ -125,15 +128,6 @@ namespace BBPC.API
             nextButton.OnPress = new UnityEngine.Events.UnityEvent();
             nextButton.OnPress.AddListener(() => changeLang(true));
             nextButton.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
-            string langNotice = Plugin.Instance.GetTranslationKey("BBPC_LangNotice", "注意：繁體中文目前處於測試階段\n如遇到問題請提出！", "TChinese", true);
-            try
-            {
-                AddTooltip(previousButton, langNotice);
-                AddTooltip(nextButton, langNotice);
-            } catch (NullReferenceException e)
-            {
-                API.Logger.Error("NULL ate everything!!!\nA strange error has occured.\nDetail: " + e.Message);
-            }
             toggleTextureReplace = CreateToggle("TextureToggleButton", Plugin.Instance.GetTranslationKey("BBPC_ToggleTexture", "Enable Texture Replacement"), ConfigManager.EnableTextures.Value, new Vector2(50, -75), 250);
             StandardMenuButton applyButton = CreateApplyButton(() => { refresh_localization(); });
             AddTooltip(applyButton, Plugin.Instance.GetTranslationKey("BPPC_Apply_Tooltip", "Apply and restart"));
