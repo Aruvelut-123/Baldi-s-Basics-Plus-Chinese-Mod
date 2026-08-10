@@ -309,6 +309,15 @@ namespace BBPC
                 API.Logger.Info($"字体已存在于 fallback 列表中");
             }
 
+            if (font.HasCharacter('中'))
+            {
+                API.Logger.Info("Font supports Chinese characters!");
+            }
+            else
+            {
+                API.Logger.Error("Font does NOT support Chinese characters!");
+            }
+
             bool stillExists = fallbackList.Contains(font);
             API.Logger.Info($"字体是否仍在列表中: {stillExists}");
         }

@@ -1,4 +1,4 @@
-﻿using BepInEx;
+﻿using System.Collections.Generic;
 using MTM101BaldAPI.AssetTools;
 using System;
 using System.Drawing.Text;
@@ -14,6 +14,15 @@ namespace BBPC.API
     {
         private static TMP_FontAsset? _cachedFont;
         private static readonly object _lock = new object();
+        private static readonly string[] TextMeshProShaderNames =
+        {
+            "TextMeshPro/Bitmap",
+            "TextMeshPro/Mobile/Bitmap",
+            "TextMeshPro/Distance Field",
+            "TextMeshPro/Mobile/Distance Field",
+            "TextMeshPro/Distance Field Overlay",
+            "TextMeshPro/Mobile/Distance Field - Masking"
+        };
 
         /// <summary>
         /// 获取 TMP 字体（带缓存）
@@ -102,6 +111,10 @@ namespace BBPC.API
         {
             try
             {
+                // AssetBundles contain platform-specific shader bytecode. Capture the
+                // shaders supplied by the running game before a Windows-built bundle
+                // introduces an unsupported shader with the same name on Linux.
+                Shader[] compatibleShaders = CaptureCompatibleTextMeshProShaders();
                 AssetBundle bundle = AssetBundle.LoadFromFile(bundlePath);
                 if (bundle == null)
                 {
@@ -143,6 +156,12 @@ namespace BBPC.API
                     }
                 }
 
+                if (font != null && !EnsureRenderableMaterial(font, compatibleShaders))
+                {
+                    Logger.Error($"字体 '{font.name}' 的材质在当前平台不可渲染");
+                    font = null;
+                }
+
                 bundle.Unload(false);
                 return font;
             }
@@ -151,6 +170,87 @@ namespace BBPC.API
                 Logger.Error($"从 AssetBundle 加载字体失败: {ex.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Captures platform-compatible TMP shaders before loading an AssetBundle.
+        /// Calling Shader.Find here is important: after the bundle is loaded Unity can
+        /// resolve the name to the bundle's incompatible platform-specific shader.
+        /// </summary>
+        private static Shader[] CaptureCompatibleTextMeshProShaders()
+        {
+            var shaders = new List<Shader>();
+
+            foreach (Shader shader in Resources.FindObjectsOfTypeAll<Shader>())
+            {
+                if (shader != null && shader.isSupported && shader.name.StartsWith("TextMeshPro/", StringComparison.Ordinal))
+                {
+                    shaders.Add(shader);
+                }
+            }
+
+            foreach (string shaderName in TextMeshProShaderNames)
+            {
+                Shader shader = Shader.Find(shaderName);
+                if (shader != null && shader.isSupported)
+                {
+                    shaders.Add(shader);
+                }
+            }
+
+            return shaders.Distinct().ToArray();
+        }
+
+        /// <summary>
+        /// Replaces platform-incompatible bundle shader bytecode while preserving the
+        /// font's atlas and material settings. This is required for bundles built on
+        /// Windows to actually draw on Linux, even though the TMP asset loads normally.
+        /// </summary>
+        private static bool EnsureRenderableMaterial(TMP_FontAsset font, Shader[] compatibleShaders)
+        {
+            Material material = font.material;
+            if (material == null)
+            {
+                Logger.Error($"字体 '{font.name}' 没有材质");
+                return false;
+            }
+
+            Shader originalShader = material.shader;
+            string shaderName = originalShader != null ? originalShader.name : string.Empty;
+            if (originalShader != null && originalShader.isSupported)
+            {
+                Logger.Info($"字体材质可渲染: {material.name} / {shaderName}");
+                return material.mainTexture != null;
+            }
+
+            Shader? replacement = compatibleShaders.FirstOrDefault(shader =>
+                shader.name.Equals(shaderName, StringComparison.Ordinal));
+
+            if (replacement == null)
+            {
+                Logger.Error($"找不到平台兼容的 TMP shader 来替换 '{shaderName}'");
+                return false;
+            }
+
+            Texture atlasTexture = material.mainTexture;
+            material.shader = replacement;
+            if (atlasTexture != null)
+            {
+                material.mainTexture = atlasTexture;
+            }
+
+            Texture? renderedAtlas = material.mainTexture;
+            bool renderable = material.shader != null && material.shader.isSupported && renderedAtlas != null;
+            if (renderable)
+            {
+                Logger.Info($"已将字体 '{font.name}' 的不兼容 shader '{shaderName}' 替换为当前平台版本；atlas={renderedAtlas!.width}x{renderedAtlas.height}");
+            }
+            else
+            {
+                Logger.Error($"字体 '{font.name}' 的 TMP 材质修复后仍不可渲染");
+            }
+
+            return renderable;
         }
 
         /// <summary>
