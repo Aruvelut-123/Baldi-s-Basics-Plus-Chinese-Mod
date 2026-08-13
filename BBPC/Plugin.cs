@@ -102,12 +102,18 @@ namespace BBPC
                 API.Logger.Info($"检测到本地化文件夹: {langPath}");
                 AssetLoader.LoadLocalizationFolder(langPath, Language.English);
             }
+            else MTM101BaldiDevAPI.AddWarningScreen($"Localization Folder {langPath} seems not exist, please check it out!", true);
 
             LoadingEvents.RegisterOnAssetsLoaded(Info, OnAssetsLoaded(), LoadingEventOrder.Post);
 
             gameObject.AddComponent<MenuTextureManager>();
 
             CustomOptionsCore.OnMenuInitialize += OnMenu;
+
+            if (ConfigManager.currect_lang.Value == "TChinese")
+            {
+                MTM101BaldiDevAPI.AddWarningScreen("繁體中文目前仍然處於測試階段，可能會遇到翻譯錯誤或翻譯缺失，歡迎提交任何相關錯誤！", false);
+            }
 
             API.Logger.Info($"Mod {MyPluginInfo.PLUGIN_NAME} is loaded!");
         }
