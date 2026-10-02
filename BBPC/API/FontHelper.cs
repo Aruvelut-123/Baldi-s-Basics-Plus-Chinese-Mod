@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+using HarmonyLib;
+using MTM101BaldAPI;
 using MTM101BaldAPI.AssetTools;
 using System;
+using System.Collections.Generic;
 using System.Drawing.Text;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.TextCore.LowLevel;
@@ -255,6 +258,12 @@ namespace BBPC.API
                 return false;
             }
 
+            if (material.HasProperty("_CullMode"))
+            {
+                material.SetFloat("_CullMode", 0f);
+                Logger.Info($"修复材质 '{material.name}' 的 _CullMode");
+            }
+
             Shader originalShader = material.shader;
             string shaderName = originalShader != null ? originalShader.name : string.Empty;
             if (originalShader != null && originalShader.isSupported)
@@ -277,6 +286,12 @@ namespace BBPC.API
             if (atlasTexture != null)
             {
                 material.mainTexture = atlasTexture;
+            }
+
+            if (material.HasProperty("_CullMode"))
+            {
+                material.SetFloat("_CullMode", 0f);
+                Logger.Info($"替换shader后再次修复 '{material.name}' 的 _CullMode");
             }
 
             Texture? renderedAtlas = material.mainTexture;

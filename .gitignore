@@ -404,3 +404,9 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+# Decompiled investigation artifacts (ilspycmd output, not part of the mod)
+_decompiled_*/
+_tmp_ilcheck/
+
+# Custom build output directory
+Build/
