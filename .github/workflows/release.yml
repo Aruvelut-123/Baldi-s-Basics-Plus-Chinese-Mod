@@ -64,7 +64,7 @@ jobs:
         uses: taiki-e/install-action@git-cliff
 
       - name: Generate changelog
-        run: git-cliff > CHANGELOG.md
+        run: git-cliff --latest > CHANGELOG.md
 
       - name: Upload changelog
         uses: actions/upload-artifact@v7
