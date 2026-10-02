@@ -74,74 +74,9 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  build-extensions:
-    runs-on: windows-latest
-    needs: build
-    timeout-minutes: 15
-    strategy:
-      matrix:
-        include:
-          - branch: feat/challengejar
-            name: BBPC.ChallengeJarExtension.dll
-            file: BBPC.ChallengeJarExtension.dll
-          - branch: feat/template
-            name: BBPC.ExtensionTemplate.dll
-            file: BBPC.ExtensionTemplate.dll
-          - branch: feat/ModManager
-            name: BBPC.ModManagerExtension.dll
-            file: BBPC.ModManagerExtension.dll
-          - branch: feat/pluslevelstudio
-            name: BBPC.PlusLevelStudioExtension.dll
-            file: BBPC.EditorExtension.dll
-          - branch: feat/nullstyle
-            name: BBPC.NULLStyleExtension.dll
-            file: BBPC.NULLStyleExtension.dll
-          - branch: feat/texturepack
-            name: BBPC.TextureExtension.dll
-            file: BBPC.TextureExtension.dll
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ matrix.branch }}
-
-      - name: Download BBPC.dll from this workflow
-        uses: actions/download-artifact@v7
-        with:
-          name: BBPC-release-dll
-          path: ./Dlls
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v5
-        with:
-          path: ${{ env.NUGET_PACKAGES }}
-          key: nuget-${{ runner.os }}-${{ matrix.branch }}-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            nuget-${{ runner.os }}-${{ matrix.branch }}-
-            nuget-${{ runner.os }}-main-
-            nuget-${{ runner.os }}-
-
-      - name: Restore dependencies
-        run: dotnet restore BBPC.sln
-
-      - name: Build
-        run: dotnet build BBPC.sln -c Release --no-restore
-
-      - name: Upload extension for publishing
-        uses: actions/upload-artifact@v7
-        with:
-          name: release-extension-${{ matrix.name }}
-          path: ./BBPC/Build/Release/${{ matrix.file }}
-          if-no-files-found: error
-          retention-days: 1
-
   publish:
     runs-on: ubuntu-latest
-    needs: [build, changelog, build-extensions]
+    needs: [build, changelog]
     timeout-minutes: 10
     permissions:
       contents: write
@@ -152,20 +87,13 @@ jobs:
           name: BBPC-release-dll
           path: ./release-assets/core
 
-      - name: Download extensions
-        uses: actions/download-artifact@v7
-        with:
-          pattern: release-extension-*
-          path: ./release-assets/extensions
-          merge-multiple: true
-
       - name: Download changelog
         uses: actions/download-artifact@v7
         with:
           name: release-changelog
           path: ./release-assets/changelog
 
-      - name: Publish release assets and changelog
+      - name: Publish release asset and changelog
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.event.release.tag_name }}
@@ -173,4 +101,3 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             ./release-assets/core/*.dll
-            ./release-assets/extensions/*.dll
