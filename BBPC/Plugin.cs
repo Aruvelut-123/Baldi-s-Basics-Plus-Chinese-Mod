@@ -1,4 +1,5 @@
-﻿using BBPC.API;
+using BBPC.API;
+using BBPC.Compat;
 using BBPC.MTMAPIPatches;
 using BBPC.Patches;
 using BepInEx;
@@ -90,6 +91,8 @@ namespace BBPC
 
             harmonyInstance.PatchAll();
 
+            StartCoroutine(ApplyExtensionCompatLater());
+
             VersionCheck.CheckGameVersion(expectedGameVersions);
 
             RegisterFallbackFont(FontHelper.GetTextMeshProFont());
@@ -116,6 +119,31 @@ namespace BBPC
             }
 
             API.Logger.Info($"Mod {MyPluginInfo.PLUGIN_NAME} is loaded!");
+        }
+
+        /// <summary>
+        /// 等待几帧后再应用外部扩展模组兼容层，
+        /// 确保所有模组程序集已加载完成（BepInEx 软依赖）。
+        /// </summary>
+        private IEnumerator ApplyExtensionCompatLater()
+        {
+            yield return null;
+            yield return null;
+
+            if (harmonyInstance == null) yield break;
+
+            try
+            {
+                ChallengeJarCompat.Apply(harmonyInstance);
+                ModManagerCompat.Apply(harmonyInstance);
+                NullStyleCompat.Apply(harmonyInstance);
+                PlusLevelStudioCompat.Apply(harmonyInstance);
+                TexturePackCompat.Apply(harmonyInstance);
+            }
+            catch (Exception ex)
+            {
+                API.Logger.Error($"扩展模组兼容层初始化失败: {ex.Message}\n{ex.StackTrace}");
+            }
         }
 
         private void OnMenu(OptionsMenu menu, CustomOptionsHandler handler)
