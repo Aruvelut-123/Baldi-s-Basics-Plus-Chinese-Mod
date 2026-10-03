@@ -282,7 +282,7 @@ namespace BBPC.Patches
         private string credits_page = string.Empty;
         private string credits_default = "{\r\n    \"pages\": [\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组</b>\",\r\n                \"\\n\",\r\n                \"汉化模组/安装程序:\",\r\n                \"Baymaxawa\",\r\n                \"文本/贴图汉化:\",\r\n                \"MMZ\"\r\n            ]\r\n        },\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组</b>\",\r\n                \"\\n\",\r\n                \"润色: 馒\\n\",\r\n                \"TMP字体: cgq\\n\",\r\n                \"特别鸣谢: ChatGPT、Deepseek\"\r\n            ]\r\n        },\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组</b>\",\r\n                \"\\n\",\r\n                \"感谢所有在群内参与测试和提供的人员!\",\r\n                \"没有你们很难做到这里!\"\r\n            ]\r\n        },\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组 赞助人员名单</b>\",\r\n                \"\\n\",\r\n                \"{AFDIAN_SPONSERS}\"\r\n            ]\r\n        }\r\n    ]\r\n}";
         public static JObject credit_json = new JObject();
-        public static string[] sponsers = new string[] { "爱发电用户_e57b1", "爱发电用户_40217", "Mrothen" };
+        public static string[] sponsers = new string[] { "爱发电用户_e57b1", "爱发电用户_40217", "Mrothen", "slxsh89" };
 
         public Credit(Plugin plug)
         {
