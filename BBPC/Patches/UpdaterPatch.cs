@@ -21,6 +21,7 @@ namespace BBPC.Patches
     {
         private enum PageMode
         {
+            NoUpdate,
             UpdateReady,
             Downloading,
             RestartRequired,
@@ -33,6 +34,7 @@ namespace BBPC.Patches
         private const string RestartLocalizationKey = "BBPC_Menu_RestartRequired";
 
         private static bool updateChecked;
+        private static bool updateCheckInProgress;
         private static GameObject? dummyReminder;
         private static Canvas? pageCanvas;
         private static GraphicRaycaster? pageRaycaster;
@@ -41,6 +43,7 @@ namespace BBPC.Patches
         private static CursorInitiator? previousCursorInitiator;
         private static GameObject? previousMenuObject;
         private static GameObject? previousOptionsObject;
+        private static bool returnToOptionsAfterPage;
         private static bool pageOpen;
         private static PageMode pageMode;
         private static TextMeshProUGUI? titleText;
@@ -141,13 +144,23 @@ namespace BBPC.Patches
         public static void RequestRestartPrompt()
         {
             RestartManager.RequestLanguageRestart();
+            returnToOptionsAfterPage = true;
             ShowPage(PageMode.RestartRequired);
         }
 
         private static async void CheckUpdatesAsync()
         {
-            await UpdateChecker.CheckForUpdates();
-            RefreshMenuReminder();
+            if (updateCheckInProgress) return;
+            updateCheckInProgress = true;
+            try
+            {
+                await UpdateChecker.CheckForUpdates();
+            }
+            finally
+            {
+                updateCheckInProgress = false;
+                RefreshMenuReminder();
+            }
         }
 
         private static Transform GetDummyReminder(Transform parent)
@@ -176,32 +189,18 @@ namespace BBPC.Patches
             if (textComponent == null) return;
 
             GameObject buttonObject = textComponent.gameObject;
-            bool canOpenPage = UpdateChecker.IsUpdateAvailable || UpdateChecker.HasPendingRestart ||
-                               RestartManager.IsLanguageRestartRequested;
             ReminderButtonMarker? marker = buttonObject.GetComponent<ReminderButtonMarker>();
-            if (!canOpenPage)
-            {
-                textComponent.ApplyLocalization(ReminderLocalizationKey, true);
-                textComponent.raycastTarget = false;
-                if (marker != null)
-                {
-                    buttonObject.tag = marker.originalTag;
-                    if (marker.ownsButton)
-                    {
-                        UnityEngine.Object.Destroy(buttonObject.GetComponent<StandardMenuButton>());
-                    }
-                    UnityEngine.Object.Destroy(marker);
-                }
-                return;
-            }
-
             if (RestartManager.IsLanguageRestartRequested || UpdateChecker.HasPendingRestart)
             {
                 textComponent.text = GetText(RestartLocalizationKey, "需要重启");
             }
-            else
+            else if (UpdateChecker.IsUpdateAvailable)
             {
                 textComponent.ApplyLocalization(UpdateLocalizationKey, true);
+            }
+            else
+            {
+                textComponent.ApplyLocalization(ReminderLocalizationKey, true);
             }
             textComponent.raycastTarget = true;
 
@@ -209,11 +208,10 @@ namespace BBPC.Patches
             bool createdButton = false;
             if (button == null)
             {
-                button = buttonObject.AddComponent<StandardMenuButton>();
-                button.InitializeAllEvents();
-                button.text = textComponent;
+                button = buttonObject.ConvertToButton<StandardMenuButton>(true);
                 createdButton = true;
             }
+            button.text = textComponent;
 
             if (marker == null)
             {
@@ -266,6 +264,10 @@ namespace BBPC.Patches
             else if (UpdateChecker.IsUpdateAvailable)
             {
                 ShowPage(PageMode.UpdateReady);
+            }
+            else
+            {
+                ShowPage(PageMode.NoUpdate);
             }
         }
 
@@ -415,7 +417,13 @@ namespace BBPC.Patches
             {
                 UpdateDownloadPageState();
             }
-            else if (pageMode == PageMode.RestartRequired || pageMode == PageMode.UpdateReady || pageMode == PageMode.Error)
+            else if (pageMode == PageMode.NoUpdate && UpdateChecker.IsUpdateAvailable)
+            {
+                pageMode = PageMode.UpdateReady;
+                UpdatePageContent();
+            }
+            else if (pageMode == PageMode.NoUpdate || pageMode == PageMode.RestartRequired ||
+                     pageMode == PageMode.UpdateReady || pageMode == PageMode.Error)
             {
                 UpdatePageContent();
             }
@@ -447,6 +455,7 @@ namespace BBPC.Patches
 
             warningText.gameObject.SetActive(false);
             UpdateReleaseInfo? release = UpdateChecker.LatestRelease;
+            bool isNoUpdate = pageMode == PageMode.NoUpdate;
             bool isRestart = pageMode == PageMode.RestartRequired;
             bool isDownloading = pageMode == PageMode.Downloading;
             bool isError = pageMode == PageMode.Error;
@@ -458,7 +467,7 @@ namespace BBPC.Patches
                 versionText.text = string.IsNullOrEmpty(pendingVersion)
                     ? GetText("BBPC_Update_RestartVersion", "设置已更改，需要重启后生效")
                     : GetText("BBPC_Update_CurrentVersion", "当前版本") + $": {UpdateChecker.CurrentVersionString}    " +
-                      GetText("BBPC_Update_NewVersion", "待安装版本") + $": {pendingVersion}";
+                      GetText("BBPC_Update_PendingVersion", "待安装版本") + $": {pendingVersion}";
                 releaseNotesHeaderText.text = GetText("BBPC_Update_NotesHeader", "说明");
                 releaseNotesText.text = GetText("BBPC_Update_RestartBody", "更新或语言设置已准备完成，重启游戏后将应用更改。");
                 statusText.text = UpdateChecker.HasPendingRestart
@@ -472,6 +481,25 @@ namespace BBPC.Patches
                 secondaryButton.gameObject.SetActive(true);
                 SetProgressVisible(UpdateChecker.HasPendingRestart);
                 UpdateProgressBar(UpdateChecker.DownloadProgress);
+                return;
+            }
+
+            if (isNoUpdate)
+            {
+                titleText.text = GetText("BBPC_Update_LatestTitle", "已是最新版本");
+                string latestVersion = UpdateChecker.LatestVersionString;
+                versionText.text = GetText("BBPC_Update_CurrentVersion", "当前版本") + $": {UpdateChecker.CurrentVersionString}    " +
+                                   GetText("BBPC_Update_NewVersion", "最新版本") + ": " +
+                                   (string.IsNullOrEmpty(latestVersion) ? GetText("BBPC_Update_Checking", "检查中…") : latestVersion);
+                releaseNotesHeaderText.text = GetText("BBPC_Update_NotesHeader", "说明");
+                releaseNotesText.text = GetText("BBPC_Update_NoUpdateBody", "当前没有可用更新。");
+                statusText.text = updateCheckInProgress ? GetText("BBPC_Update_Checking", "正在检查更新…") : string.Empty;
+                warningText.gameObject.SetActive(false);
+                primaryButton.text.text = GetText("BBPC_Update_CheckAgain", "再次检查");
+                secondaryButton.text.text = GetText("BBPC_Update_Back", "返回");
+                primaryButton.gameObject.SetActive(true);
+                secondaryButton.gameObject.SetActive(true);
+                SetProgressVisible(false);
                 return;
             }
 
@@ -565,7 +593,11 @@ namespace BBPC.Patches
 
         private static void OnPrimaryPressed()
         {
-            if (pageMode == PageMode.UpdateReady || pageMode == PageMode.Error)
+            if (pageMode == PageMode.NoUpdate)
+            {
+                CheckUpdatesAsync();
+            }
+            else if (pageMode == PageMode.UpdateReady || pageMode == PageMode.Error)
             {
                 pageMode = PageMode.Downloading;
                 UpdatePageContent();
@@ -618,11 +650,25 @@ namespace BBPC.Patches
             previousRaycaster = null;
             previousCursorInitiator = null;
 
-            if (returnToMainMenu)
+            bool restoreOptions = returnToMainMenu && returnToOptionsAfterPage;
+            if (restoreOptions)
+            {
+                if (previousOptionsObject != null)
+                {
+                    previousOptionsObject.SetActive(true);
+                }
+                previousOptionsObject = null;
+                previousMenuObject = null;
+            }
+            else if (returnToMainMenu)
             {
                 ReturnToMainMenu();
             }
-            RefreshMenuReminder();
+            returnToOptionsAfterPage = false;
+            if (!restoreOptions)
+            {
+                RefreshMenuReminder();
+            }
         }
 
         private static void ReturnToMainMenu()
