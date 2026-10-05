@@ -43,11 +43,13 @@ jobs:
       - name: Build
         run: dotnet build BBPC.sln -c Release --no-restore
 
-      - name: Upload BBPC.dll for dependent jobs
+      - name: Upload BBPC artifacts for dependent jobs
         uses: actions/upload-artifact@v7
         with:
-          name: BBPC-release-dll
-          path: ./BBPC/Build/Release/BBPC.dll
+          name: BBPC-release-artifacts
+          path: |
+            ./BBPC/Build/Release/BBPC.dll
+            ./BBPC/Build/Release/BBPCUpdatePatcher.dll
           if-no-files-found: error
           retention-days: 1
 
@@ -81,11 +83,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download BBPC.dll
+      - name: Download BBPC artifacts
         uses: actions/download-artifact@v7
         with:
-          name: BBPC-release-dll
-          path: ./release-assets/core
+          name: BBPC-release-artifacts
+          path: ./release-assets
 
       - name: Download changelog
         uses: actions/download-artifact@v7
@@ -100,4 +102,4 @@ jobs:
           body_path: ./release-assets/changelog/CHANGELOG.md
           fail_on_unmatched_files: true
           files: |
-            ./release-assets/core/*.dll
+            ./release-assets/*.dll

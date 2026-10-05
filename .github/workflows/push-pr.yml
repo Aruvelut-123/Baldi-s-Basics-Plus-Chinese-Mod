@@ -54,10 +54,12 @@ jobs:
       - name: Build
         run: dotnet build BBPC.sln -c Debug --no-restore
 
-      - name: Upload BBPC.dll
+      - name: Upload BBPC artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: BBPC.dll
-          path: ./BBPC/Build/Debug/BBPC.dll
+          name: BBPC-artifacts
+          path: |
+            ./BBPC/Build/Debug/BBPC.dll
+            ./BBPC/Build/Debug/BBPCUpdatePatcher.dll
           if-no-files-found: error
           retention-days: 7

@@ -1,6 +1,7 @@
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using BBPC.Patches;
 using MTM101BaldAPI.AssetTools;
 using MTM101BaldAPI.OptionsAPI;
 using MTM101BaldAPI.UI;
@@ -170,7 +171,11 @@ namespace BBPC.API
                 ConfigManager.EnableTextures.Value = toggleTextureReplace.Value;
                 need_restart = true;
             }
-            if (need_restart) Application.Quit();
+            if (need_restart)
+            {
+                Plugin.Instance.Config.Save();
+                UpdaterPatch.RequestRestartPrompt();
+            }
         }
 
         private static void RefreshAutoSizeIfTextChanged(TextMeshProUGUI? text, ref string? previousText)
