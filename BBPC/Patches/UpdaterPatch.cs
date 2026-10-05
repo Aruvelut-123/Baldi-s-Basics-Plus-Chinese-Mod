@@ -6,6 +6,8 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Security;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -35,13 +37,15 @@ namespace BBPC.Patches
         private static Canvas? pageCanvas;
         private static GraphicRaycaster? pageRaycaster;
         private static GraphicRaycaster? previousRaycaster;
-        private static CursorInitiator? fallbackCursorInitiator;
+        private static CursorInitiator? pageCursorInitiator;
+        private static CursorInitiator? previousCursorInitiator;
         private static GameObject? previousMenuObject;
         private static GameObject? previousOptionsObject;
         private static bool pageOpen;
         private static PageMode pageMode;
         private static TextMeshProUGUI? titleText;
         private static TextMeshProUGUI? versionText;
+        private static TextMeshProUGUI? releaseNotesHeaderText;
         private static TextMeshProUGUI? releaseNotesText;
         private static TextMeshProUGUI? statusText;
         private static TextMeshProUGUI? warningText;
@@ -167,20 +171,25 @@ namespace BBPC.Patches
         {
             if (reminderObject == null) return;
 
-            TextMeshProUGUI? textComponent = reminderObject.GetComponent<TextMeshProUGUI>();
+            TextMeshProUGUI? textComponent = reminderObject.GetComponent<TextMeshProUGUI>() ??
+                                             reminderObject.GetComponentInChildren<TextMeshProUGUI>(true);
             if (textComponent == null) return;
 
+            GameObject buttonObject = textComponent.gameObject;
             bool canOpenPage = UpdateChecker.IsUpdateAvailable || UpdateChecker.HasPendingRestart ||
                                RestartManager.IsLanguageRestartRequested;
+            ReminderButtonMarker? marker = buttonObject.GetComponent<ReminderButtonMarker>();
             if (!canOpenPage)
             {
                 textComponent.ApplyLocalization(ReminderLocalizationKey, true);
                 textComponent.raycastTarget = false;
-                ReminderButtonMarker? marker = reminderObject.GetComponent<ReminderButtonMarker>();
                 if (marker != null)
                 {
-                    reminderObject.tag = "Untagged";
-                    UnityEngine.Object.Destroy(marker.GetComponent<StandardMenuButton>());
+                    buttonObject.tag = marker.originalTag;
+                    if (marker.ownsButton)
+                    {
+                        UnityEngine.Object.Destroy(buttonObject.GetComponent<StandardMenuButton>());
+                    }
                     UnityEngine.Object.Destroy(marker);
                 }
                 return;
@@ -196,24 +205,56 @@ namespace BBPC.Patches
             }
             textComponent.raycastTarget = true;
 
-            StandardMenuButton? button = reminderObject.GetComponent<StandardMenuButton>();
-            ReminderButtonMarker? ownedMarker = reminderObject.GetComponent<ReminderButtonMarker>();
+            StandardMenuButton? button = buttonObject.GetComponent<StandardMenuButton>();
+            bool createdButton = false;
             if (button == null)
             {
-                button = reminderObject.AddComponent<StandardMenuButton>();
+                button = buttonObject.AddComponent<StandardMenuButton>();
                 button.InitializeAllEvents();
-                button.underlineOnHigh = true;
                 button.text = textComponent;
-                ownedMarker = reminderObject.AddComponent<ReminderButtonMarker>();
+                createdButton = true;
             }
 
-            reminderObject.tag = "Button";
+            if (marker == null)
+            {
+                marker = buttonObject.AddComponent<ReminderButtonMarker>();
+                marker.originalTag = buttonObject.tag;
+                marker.ownsButton = createdButton;
+            }
+
+            buttonObject.tag = "Button";
             button.underlineOnHigh = true;
-            if (ownedMarker != null)
+            bool hadListener = marker.listenerAdded;
+            if (marker.ownsButton)
             {
                 button.OnPress.RemoveAllListeners();
+                button.OnPress.AddListener(OpenUpdatePage);
             }
-            button.OnPress.AddListener(OpenUpdatePage);
+            else if (!hadListener)
+            {
+                button.OnPress.AddListener(OpenUpdatePage);
+            }
+            marker.listenerAdded = true;
+
+            textComponent.SetAllDirty();
+            Canvas.ForceUpdateCanvases();
+            RefreshMenuCursor(buttonObject, createdButton || !hadListener);
+        }
+
+        private static void RefreshMenuCursor(GameObject buttonObject, bool forceReinitialize)
+        {
+            Canvas? canvas = buttonObject.GetComponentInParent<Canvas>();
+            GraphicRaycaster? raycaster = canvas?.GetComponent<GraphicRaycaster>();
+            CursorController? cursor = CursorController.Instance;
+            if (canvas == null || raycaster == null || cursor == null) return;
+
+            cursor.graphicRaycaster = raycaster;
+            CursorInitiator? initiator = canvas.GetComponent<CursorInitiator>() ??
+                                          canvas.GetComponentInParent<CursorInitiator>();
+            if (initiator != null && (forceReinitialize || initiator.currentCursor != cursor))
+            {
+                initiator.Inititate();
+            }
         }
 
         private static void OpenUpdatePage()
@@ -238,14 +279,8 @@ namespace BBPC.Patches
                 previousMenuObject = GameObject.Find("Menu");
                 previousOptionsObject = UnityEngine.Object.FindObjectOfType<OptionsMenu>()?.gameObject;
                 previousRaycaster = CursorController.Instance?.graphicRaycaster;
-                if (CursorController.Instance != null)
-                {
-                    CursorController.Instance.graphicRaycaster = pageRaycaster;
-                }
-                else
-                {
-                    fallbackCursorInitiator = UIHelpers.AddCursorInitiatorToCanvas(pageCanvas);
-                }
+                previousCursorInitiator = previousRaycaster?.GetComponent<CursorInitiator>() ??
+                                           previousRaycaster?.GetComponentInParent<CursorInitiator>();
                 pageOpen = true;
             }
 
@@ -259,48 +294,55 @@ namespace BBPC.Patches
             if (pageCanvas != null) return;
 
             pageCanvas = UIHelpers.CreateBlankUIScreen("BBPCUpdatePage", true, false);
+            pageCanvas.renderMode = RenderMode.ScreenSpaceCamera;
+            pageCanvas.worldCamera = Singleton<GlobalCam>.Instance.Cam;
+            pageCanvas.planeDistance = 0.31f;
             pageCanvas.overrideSorting = true;
             pageCanvas.sortingOrder = 500;
             pageRaycaster = pageCanvas.GetComponent<GraphicRaycaster>();
+            pageCursorInitiator = UIHelpers.AddCursorInitiatorToCanvas(pageCanvas, new Vector2(480f, 360f));
             pageCanvas.gameObject.AddComponent<UpdaterPageDriver>();
 
-            CreateModalBackground(pageCanvas.transform);
-            titleText = CreateText("UpdateTitle", string.Empty, new Vector3(240f, 38f),
-                BaldiFonts.ComicSans36, new Vector2(450f, 44f), TextAlignmentOptions.Center);
-            versionText = CreateText("UpdateVersion", string.Empty, new Vector3(240f, 78f),
-                BaldiFonts.ComicSans24, new Vector2(450f, 32f), TextAlignmentOptions.Center);
-            releaseNotesText = CreateText("UpdateNotes", string.Empty, new Vector3(240f, 132f),
-                BaldiFonts.ComicSans18, new Vector2(430f, 120f), TextAlignmentOptions.TopLeft);
+            CreatePageBackground(pageCanvas.transform);
+            UIHelpers.AddBordersToCanvas(pageCanvas);
+            titleText = CreateText("UpdateTitle", string.Empty, new Vector3(240f, 35f),
+                BaldiFonts.ComicSans36, new Vector2(450f, 38f), TextAlignmentOptions.Center);
+            versionText = CreateText("UpdateVersion", string.Empty, new Vector3(240f, 76f),
+                BaldiFonts.ComicSans24, new Vector2(450f, 28f), TextAlignmentOptions.Center);
+            releaseNotesHeaderText = CreateText("UpdateNotesHeader", string.Empty, new Vector3(240f, 101f),
+                BaldiFonts.ComicSans18, new Vector2(450f, 22f), TextAlignmentOptions.Center);
+            releaseNotesText = CreateText("UpdateNotes", string.Empty, new Vector3(240f, 165f),
+                BaldiFonts.ComicSans18, new Vector2(430f, 110f), TextAlignmentOptions.TopLeft);
             releaseNotesText.enableWordWrapping = true;
             releaseNotesText.overflowMode = TextOverflowModes.Ellipsis;
-            statusText = CreateText("UpdateStatus", string.Empty, new Vector3(240f, 252f),
-                BaldiFonts.ComicSans18, new Vector2(450f, 32f), TextAlignmentOptions.Center);
-            warningText = CreateText("UpdateWarning", string.Empty, new Vector3(240f, 274f),
-                BaldiFonts.ComicSans18, new Vector2(450f, 24f), TextAlignmentOptions.Center);
+            statusText = CreateText("UpdateStatus", string.Empty, new Vector3(240f, 235f),
+                BaldiFonts.ComicSans18, new Vector2(450f, 28f), TextAlignmentOptions.Center);
+            warningText = CreateText("UpdateWarning", string.Empty, new Vector3(240f, 260f),
+                BaldiFonts.ComicSans18, new Vector2(450f, 20f), TextAlignmentOptions.Center);
             warningText.color = Color.red;
 
             activeBarSprite = FindSprite("Bar");
             inactiveBarSprite = FindSprite("BarTransparent");
             progressBars = CreateProgressBar();
 
-            primaryButton = CreateButton("UpdatePrimary", new Vector3(125f, 320f), new Vector2(190f, 36f),
+            primaryButton = CreateButton("UpdatePrimary", new Vector3(125f, 326f), new Vector2(190f, 36f),
                 OnPrimaryPressed);
-            secondaryButton = CreateButton("UpdateSecondary", new Vector3(355f, 320f), new Vector2(190f, 36f),
+            secondaryButton = CreateButton("UpdateSecondary", new Vector3(355f, 326f), new Vector2(190f, 36f),
                 OnSecondaryPressed);
         }
 
-        private static void CreateModalBackground(Transform parent)
+        private static void CreatePageBackground(Transform parent)
         {
-            GameObject backgroundObject = new GameObject("ModalBackground", typeof(RectTransform), typeof(Image));
+            GameObject backgroundObject = new GameObject("PageBackground", typeof(RectTransform), typeof(Image));
             backgroundObject.transform.SetParent(parent, false);
             backgroundObject.transform.SetAsFirstSibling();
             RectTransform rect = backgroundObject.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
+            rect.anchorMin = Vector2.one / 2f;
+            rect.anchorMax = Vector2.one / 2f;
+            rect.sizeDelta = new Vector2(480f, 360f);
+            rect.localPosition = Vector3.zero;
             Image background = backgroundObject.GetComponent<Image>();
-            background.color = new Color(0f, 0f, 0f, 0.88f);
+            background.color = new Color(0.12f, 0.12f, 0.12f, 1f);
             background.raycastTarget = true;
         }
 
@@ -399,8 +441,9 @@ namespace BBPC.Patches
 
         private static void UpdatePageContent()
         {
-            if (titleText == null || versionText == null || releaseNotesText == null || statusText == null ||
-                warningText == null || primaryButton == null || secondaryButton == null) return;
+            if (titleText == null || versionText == null || releaseNotesHeaderText == null ||
+                releaseNotesText == null || statusText == null || warningText == null ||
+                primaryButton == null || secondaryButton == null) return;
 
             warningText.gameObject.SetActive(false);
             UpdateReleaseInfo? release = UpdateChecker.LatestRelease;
@@ -416,6 +459,7 @@ namespace BBPC.Patches
                     ? GetText("BBPC_Update_RestartVersion", "设置已更改，需要重启后生效")
                     : GetText("BBPC_Update_CurrentVersion", "当前版本") + $": {UpdateChecker.CurrentVersionString}    " +
                       GetText("BBPC_Update_NewVersion", "待安装版本") + $": {pendingVersion}";
+                releaseNotesHeaderText.text = GetText("BBPC_Update_NotesHeader", "说明");
                 releaseNotesText.text = GetText("BBPC_Update_RestartBody", "更新或语言设置已准备完成，重启游戏后将应用更改。");
                 statusText.text = UpdateChecker.HasPendingRestart
                     ? UpdateChecker.DownloadStatus
@@ -436,6 +480,7 @@ namespace BBPC.Patches
                 titleText.text = GetText("BBPC_Update_DownloadingTitle", "正在下载更新");
                 versionText.text = GetText("BBPC_Update_CurrentVersion", "当前版本") + $": {UpdateChecker.CurrentVersionString}    " +
                                    GetText("BBPC_Update_NewVersion", "最新版本") + $": {UpdateChecker.LatestVersionString}";
+                releaseNotesHeaderText.text = GetText("BBPC_Update_NotesHeader", "说明");
                 releaseNotesText.text = GetText("BBPC_Update_DownloadingBody", "请稍候，更新文件正在下载并校验。");
                 statusText.text = UpdateChecker.DownloadStatus;
                 primaryButton.gameObject.SetActive(false);
@@ -450,6 +495,9 @@ namespace BBPC.Patches
                 : GetText("BBPC_Update_Title", "发现新版本");
             versionText.text = GetText("BBPC_Update_CurrentVersion", "当前版本") + $": {UpdateChecker.CurrentVersionString}    " +
                                GetText("BBPC_Update_NewVersion", "最新版本") + $": {UpdateChecker.LatestVersionString}";
+            releaseNotesHeaderText.text = isError
+                ? GetText("BBPC_Update_NotesHeader", "说明")
+                : GetText("BBPC_Update_ReleaseNotes", "更新日志");
             releaseNotesText.text = isError
                 ? (UpdateChecker.DownloadError ?? GetText("BBPC_Update_ErrorBody", "更新失败，请稍后重试。"))
                 : BuildReleaseNotes(release);
@@ -473,7 +521,20 @@ namespace BBPC.Patches
             }
 
             string notes = release.Body.Replace("\r\n", "\n").Trim();
-            return notes.Length <= 3500 ? notes : notes.Substring(0, 3500) + "\n…";
+            if (notes.Length > 3500) notes = notes.Substring(0, 3500) + "\n…";
+            return ConvertMarkdownForTextMeshPro(notes);
+        }
+
+        private static string ConvertMarkdownForTextMeshPro(string markdown)
+        {
+            string escaped = SecurityElement.Escape(markdown) ?? string.Empty;
+            escaped = Regex.Replace(escaped, @"(?m)^\s*#{1,6}\s+(.+?)\s*$", "<b>$1</b>");
+            escaped = Regex.Replace(escaped, @"\[([^\]]+)\]\([^\)]+\)", "$1");
+            escaped = Regex.Replace(escaped, @"\*\*(.+?)\*\*", "<b>$1</b>");
+            escaped = Regex.Replace(escaped, @"(?<!\*)\*([^*\r\n]+)\*(?!\*)", "<i>$1</i>");
+            escaped = Regex.Replace(escaped, @"`([^`]+)`", "<color=#CCCCCC>$1</color>");
+            escaped = Regex.Replace(escaped, @"(?m)^\s*[-*]\s+", "• ");
+            return escaped;
         }
 
         private static void SetProgressVisible(bool visible)
@@ -542,19 +603,20 @@ namespace BBPC.Patches
         {
             if (!pageOpen) return;
 
-            if (CursorController.Instance != null && previousRaycaster != null)
+            pageOpen = false;
+            if (pageCanvas != null) pageCanvas.gameObject.SetActive(false);
+
+            if (previousCursorInitiator != null)
+            {
+                previousCursorInitiator.Inititate();
+            }
+            else if (CursorController.Instance != null && previousRaycaster != null)
             {
                 CursorController.Instance.graphicRaycaster = previousRaycaster;
             }
-            if (fallbackCursorInitiator != null)
-            {
-                UnityEngine.Object.Destroy(fallbackCursorInitiator);
-                fallbackCursorInitiator = null;
-            }
 
             previousRaycaster = null;
-            pageOpen = false;
-            if (pageCanvas != null) pageCanvas.gameObject.SetActive(false);
+            previousCursorInitiator = null;
 
             if (returnToMainMenu)
             {
@@ -592,6 +654,9 @@ namespace BBPC.Patches
 
         private sealed class ReminderButtonMarker : MonoBehaviour
         {
+            public string originalTag = "Untagged";
+            public bool ownsButton;
+            public bool listenerAdded;
         }
     }
 
