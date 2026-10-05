@@ -179,6 +179,7 @@ namespace BBPC.Patches
                 ReminderButtonMarker? marker = reminderObject.GetComponent<ReminderButtonMarker>();
                 if (marker != null)
                 {
+                    reminderObject.tag = "Untagged";
                     UnityEngine.Object.Destroy(marker.GetComponent<StandardMenuButton>());
                     UnityEngine.Object.Destroy(marker);
                 }
@@ -206,6 +207,8 @@ namespace BBPC.Patches
                 ownedMarker = reminderObject.AddComponent<ReminderButtonMarker>();
             }
 
+            reminderObject.tag = "Button";
+            button.underlineOnHigh = true;
             if (ownedMarker != null)
             {
                 button.OnPress.RemoveAllListeners();
