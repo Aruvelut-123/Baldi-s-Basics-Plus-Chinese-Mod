@@ -1,7 +1,7 @@
+using BBPC.API;
 using MTM101BaldAPI;
 using HarmonyLib;
 using System.Collections.Generic;
-using System.Text;
 using TMPro;
 using UnityEngine;
 
@@ -28,37 +28,6 @@ namespace BBPC
         {
             new KeyValuePair<string, Vector2>("SaveFolderButton", new Vector2(150f, 50f))
         };
-
-        private static Dictionary<string, Transform> BuildTransformPathMap(Transform parent)
-        {
-            var map = new Dictionary<string, Transform>();
-            var children = parent.GetComponentsInChildren<Transform>(true);
-
-            foreach (var child in children)
-            {
-                if (child == parent) continue;
-
-                StringBuilder pathBuilder = new StringBuilder();
-                Transform current = child;
-                while (current != null && current != parent)
-                {
-                    if (pathBuilder.Length > 0)
-                        pathBuilder.Insert(0, "/");
-                    pathBuilder.Insert(0, current.name);
-                    current = current.parent;
-                }
-
-                if (current == parent)
-                {
-                    string path = pathBuilder.ToString();
-                    if (!map.ContainsKey(path))
-                    {
-                        map.Add(path, child);
-                    }
-                }
-            }
-            return map;
-        }
 
         [ConditionalPatchAlways]
         [HarmonyPatch(typeof(MenuButton), "Press")]
@@ -89,7 +58,7 @@ namespace BBPC
 
                 if (__instance.name == "About" && value && !fixesApplied)
                 {
-                    var transformMap = BuildTransformPathMap(__instance.transform);
+                    Dictionary<string, Transform> transformMap = __instance.transform.BuildPathMap();
                     ApplyLocalization(transformMap);
                     ApplySizeDeltaChanges(transformMap);
                     fixesApplied = true;
@@ -106,11 +75,8 @@ namespace BBPC
             {
                 if (transformMap.TryGetValue(entry.Key, out Transform targetTransform))
                 {
-                    TextLocalizer localizer = targetTransform.GetComponent<TextLocalizer>();
-                    if (localizer != null)
-                    {
-                        localizer.RefreshLocalization();
-                    }
+                    TextMeshProUGUI? textComponent = targetTransform.GetComponent<TextMeshProUGUI>();
+                    textComponent?.ApplyLocalization(entry.Value, true);
                 }
                 else
                 {
@@ -172,30 +138,16 @@ namespace BBPC
                         targetTransform.GetComponent<WebsiteOpener>().url = "https://github.com/Aruvelut-123/Baldi-s-Basics-Plus-Chinese-Mod/issues";
                         targetTransform.gameObject.SetActive(true);
                     }
-                    TextMeshProUGUI textComponent = targetTransform.GetComponent<TextMeshProUGUI>();
+                    TextMeshProUGUI? textComponent = targetTransform.GetComponent<TextMeshProUGUI>();
                     if (textComponent != null)
                     {
-                        Component[] components = targetTransform.GetComponents<Component>();
-                        foreach (Component component in components)
+                        TextLocalizer? existingLocalizer = textComponent.GetComponent<TextLocalizer>();
+                        bool keyChanged = existingLocalizer == null ||
+                            !string.Equals(existingLocalizer.key, entry.Value, System.StringComparison.Ordinal);
+                        textComponent.ApplyLocalization(entry.Value);
+                        if (keyChanged)
                         {
-                            if (component != null && component.GetType().Name == "TextLocalizer" && component.GetType() != typeof(TextLocalizer))
-                            {
-                                Object.Destroy(component);
-                            }
-                        }
-
-                        TextLocalizer localizer = textComponent.GetComponent<TextLocalizer>();
-                        if (localizer == null)
-                        {
-                            localizer = textComponent.gameObject.AddComponent<TextLocalizer>();
-                            localizer.key = entry.Value;
-                            API.Logger.Info($"[AboutMenuPatch] 已为 {entry.Key} 添加TextLocalizer组件，使用键值: {entry.Value}");
-                        }
-                        else if (localizer.key != entry.Value)
-                        {
-                            localizer.key = entry.Value;
-                            localizer.RefreshLocalization();
-                            API.Logger.Info($"[AboutMenuPatch] 已更新 {entry.Key} 的TextLocalizer键值: {entry.Value}");
+                            API.Logger.Info($"[AboutMenuPatch] 已为 {entry.Key} 应用 TextLocalizer，使用键值: {entry.Value}");
                         }
                     }
                     else

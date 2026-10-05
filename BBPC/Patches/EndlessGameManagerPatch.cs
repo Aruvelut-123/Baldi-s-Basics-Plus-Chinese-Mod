@@ -78,33 +78,8 @@ namespace BBPC.Patches
                 GameObject menuItem = GameObject.Find(pair.Key);
                 if (menuItem != null)
                 {
-                    TextMeshProUGUI textComponent = menuItem.GetComponent<TextMeshProUGUI>();
-                    if (textComponent != null)
-                    {
-                        string originalText = textComponent.text;
-                        
-                        Component[] components = menuItem.GetComponents<Component>();
-                        foreach (Component component in components)
-                        {
-                            if (component != null && component.GetType().Name == "TextLocalizer" && component.GetType() != typeof(TextLocalizer))
-                            {
-                                Object.Destroy(component);
-                            }
-                        }
-                        TextLocalizer localizer = menuItem.GetComponent<TextLocalizer>();
-                        if (localizer == null)
-                        {
-                            localizer = menuItem.AddComponent<TextLocalizer>();
-                            localizer.key = pair.Value;
-                            
-                            localizer.RefreshLocalization();
-                        }
-                        else
-                        {
-                            localizer.key = pair.Value;
-                            localizer.RefreshLocalization();
-                        }
-                    }
+                    TextMeshProUGUI? textComponent = menuItem.GetComponent<TextMeshProUGUI>();
+                    textComponent?.ApplyLocalization(pair.Value, true);
                 }
             }
         }

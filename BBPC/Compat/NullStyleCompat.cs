@@ -11,8 +11,10 @@ using BBPC.API;
 namespace BBPC.Compat
 {
     /// <summary>
-    /// NullStyle（levs_kittne.baldiplus.null）扩展兼容层 —�?选项分类部分�?    /// �?NULL 的选项分类（NullStyleOptionsCategory）的开关标�?/ 悬停提示 /
-    /// 滚动提示注入翻译 key�?    /// 原实现：feat/nullstyle 分支 NullStyleOCPatch.cs（NullStyleOptionsPatch）�?    /// 编辑器工具部分见 NullStyleEditorCompat�?    /// </summary>
+    /// NullStyle (levs_kittne.baldiplus.null) options compatibility layer.
+    /// Localizes option labels, tooltips, and the scroll hint.
+    /// Editor tool localization is handled by NullStyleEditorCompat.
+    /// </summary>
     public static class NullStyleCompat
     {
         public const string ModGuid = "levs_kittne.baldiplus.null";
@@ -20,6 +22,7 @@ namespace BBPC.Compat
         private const string CategoryTypeName = "NULL.Manager.NullStyleOptionsCategory";
 
         private static bool _applied;
+        private static MethodInfo? _addTooltipMethod;
 
         private static readonly string[] ToggleNames =
         {
@@ -77,6 +80,10 @@ namespace BBPC.Compat
             Type? categoryType = CompatReflection.FindType(AssemblyName, CategoryTypeName);
             if (categoryType == null) return;
 
+            _addTooltipMethod = categoryType.GetMethod("AddTooltip",
+                BindingFlags.NonPublic | BindingFlags.Instance, null,
+                new Type[] { typeof(StandardMenuButton), typeof(string) }, null);
+
             MethodInfo? build = AccessTools.Method(categoryType, "Build");
             if (build != null)
                 harmony.Patch(build, postfix: new HarmonyMethod(typeof(NullStyleCompat), nameof(BuildPostfix)));
@@ -126,47 +133,22 @@ namespace BBPC.Compat
                 Transform textTransform = toggleTransform.Find("ToggleText");
                 if (textTransform != null)
                 {
-                    TextMeshProUGUI tmp = textTransform.GetComponent<TextMeshProUGUI>();
-                    if (tmp != null)
-                    {
-                        var existingTL = tmp.gameObject.GetComponent<TextLocalizer>();
-                        if (existingTL != null) UnityEngine.Object.Destroy(existingTL);
-
-                        TextLocalizer textTL = tmp.gameObject.AddComponent<TextLocalizer>();
-                        textTL.key = ToggleKeys[i];
-                        textTL.RefreshLocalization();
-                    }
+                    TextMeshProUGUI? tmp = textTransform.GetComponent<TextMeshProUGUI>();
+                    tmp?.ApplyLocalization(ToggleKeys[i], true);
                 }
 
                 Transform hotSpot = toggleTransform.Find("HotSpot");
-                if (hotSpot != null)
+                StandardMenuButton? button = hotSpot?.GetComponent<StandardMenuButton>();
+                if (button != null && _addTooltipMethod != null)
                 {
-                    StandardMenuButton btn = hotSpot.GetComponent<StandardMenuButton>();
-                    if (btn != null)
+                    string translatedTooltip = Plugin.Instance.GetTranslationKey(TooltipKeys[i], DefaultTooltips[i]);
+                    try
                     {
-                        var existingTooltip = btn.gameObject.GetComponent<TextLocalizer>();
-                        if (existingTooltip != null) UnityEngine.Object.Destroy(existingTooltip);
-
-                        TextLocalizer tooltipLocalizer = btn.gameObject.AddComponent<TextLocalizer>();
-                        tooltipLocalizer.key = TooltipKeys[i];
-                        tooltipLocalizer.RefreshLocalization();
-
-                        Type? categoryType = CompatReflection.FindType(AssemblyName, CategoryTypeName);
-                        MethodInfo? method = categoryType?.GetMethod("AddTooltip",
-                            BindingFlags.NonPublic | BindingFlags.Instance, null,
-                            new Type[] { typeof(StandardMenuButton), typeof(string) }, null);
-                        if (method != null)
-                        {
-                            string translatedTooltip = Plugin.Instance.GetTranslationKey(TooltipKeys[i], DefaultTooltips[i]);
-                            try
-                            {
-                                method.Invoke(instance, new object[] { btn, translatedTooltip });
-                            }
-                            catch (Exception ex)
-                            {
-                                API.Logger.Error($"NullStyleCompat: AddTooltip failed - {ex.Message}");
-                            }
-                        }
+                        _addTooltipMethod.Invoke(instance, new object[] { button, translatedTooltip });
+                    }
+                    catch (Exception ex)
+                    {
+                        API.Logger.Error($"NullStyleCompat: AddTooltip failed - {ex.Message}");
                     }
                 }
             }
@@ -180,12 +162,7 @@ namespace BBPC.Compat
             TextMeshProUGUI hintText = hintTransform.GetComponent<TextMeshProUGUI>();
             if (hintText == null) return;
 
-            var existingTL = hintText.gameObject.GetComponent<TextLocalizer>();
-            if (existingTL != null) UnityEngine.Object.Destroy(existingTL);
-
-            TextLocalizer hintTL = hintText.gameObject.AddComponent<TextLocalizer>();
-            hintTL.key = "NULL_ScrollHint";
-            hintTL.RefreshLocalization();
+            hintText.ApplyLocalization("NULL_ScrollHint", true);
         }
     }
 }

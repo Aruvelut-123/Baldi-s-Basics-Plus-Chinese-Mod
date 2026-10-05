@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+using BBPC.API;
+using HarmonyLib;
 using MTM101BaldAPI;
 using System;
 using System.Collections.Generic;
@@ -16,11 +17,8 @@ namespace BBPC.MTMAPIPatches
         [HarmonyPostfix]
         public static void StartPostfix(ModLoadingScreenManager __instance)
         {
-            if (__instance.transform.Find("Text") == null) return;
-            GameObject loadingText = __instance.transform.Find("Text").gameObject;
-            TextLocalizer loadingTextTL = loadingText.AddComponent<TextLocalizer>();
-            loadingTextTL.key = "BAPI_loading";
-            loadingTextTL.RefreshLocalization();
+            Transform? textTransform = __instance.transform.Find("Text");
+            textTransform?.gameObject.ApplyLocalization("BAPI_loading", true);
         }
     }
 

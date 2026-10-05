@@ -27,6 +27,14 @@ namespace BBPC.API
             "TextMeshPro/Mobile/Distance Field - Masking"
         };
 
+        private static readonly string[] FallbackSystemFontNames =
+        {
+            "Microsoft YaHei",
+            "SimHei",
+            "NotoSansSC",
+            "Arial"
+        };
+
         /// <summary>
         /// 获取 TMP 字体（带缓存）
         /// </summary>
@@ -315,28 +323,19 @@ namespace BBPC.API
         {
             try
             {
-                // 检查是否是系统字体
                 string[] systemFonts = GetOSInstalledFontNames();
-                if (!systemFonts.Any(f => f.Equals(fontName, StringComparison.OrdinalIgnoreCase)))
+                HashSet<string> installedFonts = new HashSet<string>(systemFonts, StringComparer.OrdinalIgnoreCase);
+                if (!installedFonts.Contains(fontName))
                 {
-                    // 尝试常见的备用字体
-                    string[] fallbackFonts = { "Microsoft YaHei", "SimHei", "NotoSansSC", "Arial" };
-                    foreach (var fallback in fallbackFonts)
-                    {
-                        if (systemFonts.Any(f => f.Equals(fallback, StringComparison.OrdinalIgnoreCase)))
-                        {
-                            fontName = fallback;
-                            Logger.Info($"使用备用系统字体: {fontName}");
-                            break;
-                        }
-                    }
-
-                    // 如果还是没有，直接返回
-                    if (!systemFonts.Any(f => f.Equals(fontName, StringComparison.OrdinalIgnoreCase)))
+                    string? fallback = FallbackSystemFontNames.FirstOrDefault(installedFonts.Contains);
+                    if (fallback == null)
                     {
                         Logger.Warning($"系统字体 '{fontName}' 未安装");
                         return null;
                     }
+
+                    fontName = fallback;
+                    Logger.Info($"使用备用系统字体: {fontName}");
                 }
 
                 // 方法1：通过 Unity Font 对象创建
@@ -402,7 +401,7 @@ namespace BBPC.API
             catch (Exception ex)
             {
                 Logger.Error($"获取系统字体列表失败: {ex.Message}");
-                return new string[0];
+                return Array.Empty<string>();
             }
         }
 

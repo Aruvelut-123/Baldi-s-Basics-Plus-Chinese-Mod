@@ -132,18 +132,7 @@ namespace BBPC
 
             if (harmonyInstance == null) yield break;
 
-            try
-            {
-                ChallengeJarCompat.Apply(harmonyInstance);
-                ModManagerCompat.Apply(harmonyInstance);
-                NullStyleCompat.Apply(harmonyInstance);
-                PlusLevelStudioCompat.Apply(harmonyInstance);
-                TexturePackCompat.Apply(harmonyInstance);
-            }
-            catch (Exception ex)
-            {
-                API.Logger.Error($"扩展模组兼容层初始化失败: {ex.Message}\n{ex.StackTrace}");
-            }
+            ExtensionCompat.ApplyAll(harmonyInstance);
         }
 
         private void OnMenu(OptionsMenu menu, CustomOptionsHandler handler)
@@ -221,9 +210,8 @@ namespace BBPC
 
         public static T LoadAsset<T>(string name) where T : UnityEngine.Object
         {
-            return (from x in Resources.FindObjectsOfTypeAll<T>()
-                    where x.name.ToLower() == name.ToLower()
-                    select x).First();
+            return Resources.FindObjectsOfTypeAll<T>()
+                .First(asset => string.Equals(asset.name, name, StringComparison.OrdinalIgnoreCase));
         }
 
         public static StandardMenuButton CreateButtonWithSprite(string name, Sprite sprite, Sprite? spriteOnHightlight = null, Transform? parent = null, Vector3? positon = null)
@@ -360,42 +348,17 @@ namespace BBPC
         {
             if (!ConfigManager.AreTexturesEnabled()) return;
 
-            string modPath = AssetLoader.GetModPath(this);
-            string texturesPath = Path.Combine(modPath, "Textures");
+            string texturesPath = Path.Combine(AssetLoader.GetModPath(this), "Textures");
+            if (!Directory.Exists(texturesPath)) return;
 
-            if (Directory.Exists(texturesPath))
+            API.Logger.Info("正在应用主菜单纹理...");
+            Dictionary<string, Texture2D> textureLookup = BuildTextureLookup();
+            foreach (string textureName in menuTextureNames)
             {
-                API.Logger.Info("正在应用主菜单纹理...");
-                Texture2D[] allGameTextures = Resources.FindObjectsOfTypeAll<Texture2D>();
-                foreach (string textureName in menuTextureNames)
+                string textureFile = Path.Combine(texturesPath, textureName + ".png");
+                if (File.Exists(textureFile) && textureLookup.TryGetValue(textureName, out Texture2D originalTexture))
                 {
-                    Texture2D originalTexture = allGameTextures.FirstOrDefault(t => t.name == textureName);
-                    if (originalTexture != null)
-                    {
-                        string textureFile = Path.Combine(texturesPath, textureName + ".png");
-                        if (File.Exists(textureFile))
-                        {
-                            try
-                            {
-                                Texture2D newTexture = AssetLoader.TextureFromFile(textureFile);
-                                if (newTexture != null)
-                                {
-                                    if (originalTexture.width != newTexture.width || originalTexture.height != newTexture.height)
-                                    {
-                                        API.Logger.Warning($"纹理 '{textureName}' 尺寸 ({newTexture.width}x{newTexture.height}) 与原始尺寸 ({originalTexture.width}x{originalTexture.height}) 不匹配。已跳过替换。");
-                                        continue;
-                                    }
-
-                                    newTexture = AssetLoader.AttemptConvertTo(newTexture, originalTexture.format);
-                                    AssetLoader.ReplaceTexture(originalTexture, newTexture);
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                API.Logger.Error($"替换纹理 '{textureName}' 时出错: {e.Message}");
-                            }
-                        }
-                    }
+                    TryReplaceTexture(originalTexture, textureFile, false);
                 }
             }
         }
@@ -404,49 +367,67 @@ namespace BBPC
         {
             if (!ConfigManager.AreTexturesEnabled()) return;
 
-            string modPath = AssetLoader.GetModPath(this);
-            string texturesPath = Path.Combine(modPath, "Textures", ConfigManager.currect_lang.Value);
+            string texturesPath = Path.Combine(
+                AssetLoader.GetModPath(this), "Textures", ConfigManager.currect_lang.Value);
+            if (!Directory.Exists(texturesPath)) return;
 
-            if (Directory.Exists(texturesPath))
+            API.Logger.Info($"检测到纹理文件夹: {texturesPath}, 正在替换...");
+            Dictionary<string, Texture2D> textureLookup = BuildTextureLookup();
+            foreach (string textureFile in Directory.GetFiles(texturesPath, "*.png", SearchOption.AllDirectories))
             {
-                API.Logger.Info($"检测到纹理文件夹: {texturesPath}, 正在替换...");
-
-                Texture2D[] allGameTextures = Resources.FindObjectsOfTypeAll<Texture2D>();
-                string[] textureFiles = Directory.GetFiles(texturesPath, "*.png", SearchOption.AllDirectories);
-
-                foreach (string textureFile in textureFiles)
+                string textureName = Path.GetFileNameWithoutExtension(textureFile);
+                if (textureLookup.TryGetValue(textureName, out Texture2D originalTexture))
                 {
-                    string textureName = Path.GetFileNameWithoutExtension(textureFile);
-                    Texture2D originalTexture = allGameTextures.FirstOrDefault(t => t.name == textureName);
-
-                    if (originalTexture != null)
-                    {
-                        try
-                        {
-                            Texture2D newTexture = AssetLoader.TextureFromFile(textureFile);
-                            if (newTexture != null)
-                            {
-                                if (originalTexture.width != newTexture.width || originalTexture.height != newTexture.height)
-                                {
-                                    API.Logger.Warning($"纹理 '{textureName}' 尺寸 ({newTexture.width}x{newTexture.height}) 与原始尺寸 ({originalTexture.width}x{originalTexture.height}) 不匹配。已跳过替换。");
-                                    continue;
-                                }
-
-                                newTexture = AssetLoader.AttemptConvertTo(newTexture, originalTexture.format);
-                                AssetLoader.ReplaceTexture(originalTexture, newTexture);
-                                API.Logger.Info($"纹理 '{textureName}' 已替换。");
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            API.Logger.Error($"替换纹理 '{textureName}' 时出错: {e.Message}");
-                        }
-                    }
-                    else
-                    {
-                        API.Logger.Warning($"未找到对应的纹理文件: {textureName}");
-                    }
+                    TryReplaceTexture(originalTexture, textureFile, true);
                 }
+                else
+                {
+                    API.Logger.Warning($"未找到对应的纹理文件: {textureName}");
+                }
+            }
+        }
+
+        private static Dictionary<string, Texture2D> BuildTextureLookup()
+        {
+            Dictionary<string, Texture2D> lookup = new Dictionary<string, Texture2D>(StringComparer.Ordinal);
+            foreach (Texture2D texture in Resources.FindObjectsOfTypeAll<Texture2D>())
+            {
+                if (texture != null && !lookup.ContainsKey(texture.name))
+                {
+                    lookup.Add(texture.name, texture);
+                }
+            }
+
+            return lookup;
+        }
+
+        private static bool TryReplaceTexture(Texture2D originalTexture, string textureFile, bool logSuccess)
+        {
+            string textureName = Path.GetFileNameWithoutExtension(textureFile);
+            try
+            {
+                Texture2D newTexture = AssetLoader.TextureFromFile(textureFile);
+                if (newTexture == null) return false;
+
+                if (originalTexture.width != newTexture.width || originalTexture.height != newTexture.height)
+                {
+                    API.Logger.Warning($"纹理 '{textureName}' 尺寸 ({newTexture.width}x{newTexture.height}) 与原始尺寸 ({originalTexture.width}x{originalTexture.height}) 不匹配。已跳过替换。");
+                    return false;
+                }
+
+                Texture2D convertedTexture = AssetLoader.AttemptConvertTo(newTexture, originalTexture.format);
+                AssetLoader.ReplaceTexture(originalTexture, convertedTexture);
+                if (logSuccess)
+                {
+                    API.Logger.Info($"纹理 '{textureName}' 已替换。");
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                API.Logger.Error($"替换纹理 '{textureName}' 时出错: {ex.Message}");
+                return false;
             }
         }
 

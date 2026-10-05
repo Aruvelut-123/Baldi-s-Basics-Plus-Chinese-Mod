@@ -13,7 +13,9 @@ using BBPC.API;
 namespace BBPC.Compat
 {
     /// <summary>
-    /// PlusLevelStudio（mtm101.rulerp.baldiplus.levelstudio）扩展兼容层�?    /// 包含：Path.Combine 重定向（�?LevelStudio �?Data/UI 资源重定向到�?mod �?    /// EditorData 目录）、编辑器模式选择菜单的按钮本地化�?    /// 原实现：feat/pluslevelstudio 分支 PathPatch.cs / EditorModeSelectionMenuPatch.cs�?    /// </summary>
+    /// PlusLevelStudio (mtm101.rulerp.baldiplus.levelstudio) compatibility layer.
+    /// Redirects editor Data/UI paths and localizes the editor mode selection menu.
+    /// </summary>
     public static class PlusLevelStudioCompat
     {
         public const string ModGuid = "mtm101.rulerp.baldiplus.levelstudio";
@@ -120,9 +122,7 @@ namespace BBPC.Compat
 
             if (key != null)
             {
-                TextLocalizer tl = __result.text.gameObject.GetComponent<TextLocalizer>() ?? __result.text.gameObject.AddComponent<TextLocalizer>();
-                tl.key = key;
-                tl.RefreshLocalization();
+                __result.text.ApplyLocalization(key, true);
             }
         }
 
@@ -159,9 +159,7 @@ namespace BBPC.Compat
 
                     if (key != null)
                     {
-                        TextLocalizer tl = tmpText.gameObject.GetComponent<TextLocalizer>() ?? tmpText.gameObject.AddComponent<TextLocalizer>();
-                        tl.key = key;
-                        tl.RefreshLocalization();
+                        tmpText.ApplyLocalization(key, true);
                     }
                 }
             }

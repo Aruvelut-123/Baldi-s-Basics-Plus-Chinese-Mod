@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+using BBPC.API;
+using HarmonyLib;
 using MTM101BaldAPI;
 using MTM101BaldAPI.OptionsAPI;
 using MTM101BaldAPI.SaveSystem;
@@ -79,26 +80,16 @@ namespace BBPC.MTMAPIPatches
             Transform modListHeaderTransform = ___mainScreen.transform.Find("ModListHeader");
             if (modListHeaderTransform == null) return;
             GameObject modListHeader = modListHeaderTransform.gameObject;
-            TextLocalizer modListHeaderTL = modListHeader.AddComponent<TextLocalizer>();
-            modListHeaderTL.key = "BAPI_USEDMODS";
-            modListHeaderTL.RefreshLocalization();
-            TextLocalizer deleteButtonTL = ___deleteButton.gameObject.AddComponent<TextLocalizer>();
-            deleteButtonTL.key = "BAPI_but_Delete";
-            deleteButtonTL.RefreshLocalization();
-            TextLocalizer transferButtonTL = ___transferButton.gameObject.AddComponent<TextLocalizer>();
-            transferButtonTL.key = "BAPI_but_ttcg";
-            transferButtonTL.RefreshLocalization();
+            modListHeader.ApplyLocalization("BAPI_USEDMODS", true);
+            ___deleteButton.gameObject.ApplyLocalization("BAPI_but_Delete", true);
+            ___transferButton.gameObject.ApplyLocalization("BAPI_but_ttcg", true);
             Transform YesButtonTransform = ___warnScreen.transform.Find("YesButton");
             Transform NoButtonTransform = ___warnScreen.transform.Find("NoButton");
             if (YesButtonTransform == null || NoButtonTransform == null) return;
-            GameObject YesButton = YesButtonTransform.gameObject;
-            GameObject NoButton = NoButtonTransform.gameObject;
-            TextLocalizer YesButtonTL = YesButton.AddComponent<TextLocalizer>();
-            YesButtonTL.key = "BAPI_but_YES";
-            YesButtonTL.RefreshLocalization();
-            TextLocalizer NoButtonTL = NoButton.AddComponent<TextLocalizer>();
-            NoButtonTL.key = "BAPI_but_NO";
-            NoButtonTL.RefreshLocalization();
+            GameObject yesButton = YesButtonTransform.gameObject;
+            GameObject noButton = NoButtonTransform.gameObject;
+            yesButton.ApplyLocalization("BAPI_but_YES", true);
+            noButton.ApplyLocalization("BAPI_but_NO", true);
         }
     }
 }

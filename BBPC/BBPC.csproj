@@ -4,7 +4,7 @@
     <TargetFramework>net462</TargetFramework>
     <AssemblyName>BBPC</AssemblyName>
     <Product>Baldi's Basics Plus Chinese Pack Support</Product>
-    <Version>1.4.1.5</Version>
+    <Version>1.4.1.6</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>
@@ -53,14 +53,8 @@
     <Reference Include="Assembly-CSharp">
       <HintPath>..\Dlls\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="BepInEx">
-      <HintPath>..\Dlls\BepInEx.dll</HintPath>
-    </Reference>
     <Reference Include="MoonSharp.Interpreter">
       <HintPath>..\Dlls\MoonSharp.Interpreter.dll</HintPath>
-    </Reference>
-    <Reference Include="mscorlib">
-      <HintPath>..\mscorlib.dll</HintPath>
     </Reference>
     <Reference Include="MTM101BaldAPI">
       <HintPath>..\Dlls\MTM101BaldAPI.dll</HintPath>
@@ -71,14 +65,8 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\Dlls\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="System.Net.Http">
-      <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6\System.Net.Http.dll</HintPath>
-    </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>..\Dlls\Unity.TextMeshPro.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>..\Dlls\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>..\Dlls\UnityEngine.UI.dll</HintPath>

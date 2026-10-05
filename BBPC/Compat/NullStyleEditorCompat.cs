@@ -7,8 +7,9 @@ using BBPC.API;
 namespace BBPC.Compat
 {
     /// <summary>
-    /// NullStyle（levs_kittne.baldiplus.null）扩展兼容层 —�?编辑器工具描述部分�?    /// �?NULL 的编辑器工具（NullTool / NullGlitchTool / NullProjectileTool）的
-    /// titleKey / descKey 属�?getter 注入翻译 key�?    /// 原实现：feat/nullstyle 分支 NullStyleEditorPatch.cs�?    /// </summary>
+    /// NullStyle (levs_kittne.baldiplus.null) editor compatibility layer.
+    /// Localizes the titleKey/descKey getters for the NULL editor tools.
+    /// </summary>
     public static class NullStyleEditorCompat
     {
         public const string ModGuid = "levs_kittne.baldiplus.null";

@@ -158,17 +158,9 @@ namespace BBPC.Patches
             TextMeshProUGUI? textComponent = reminderObject.GetComponent<TextMeshProUGUI>();
             if (textComponent != null)
             {
-                TextLocalizer? localizer = textComponent.GetComponent<TextLocalizer>();
-                if (localizer == null)
-                {
-                    localizer = reminderObject.AddComponent<TextLocalizer>();
-                }
-
                 if (UpdateChecker.IsUpdateAvailable)
                 {
-                    localizer.key = UpdateLocalizationKey;
-                    localizer.RefreshLocalization();
-
+                    textComponent.ApplyLocalization(UpdateLocalizationKey, true);
                     textComponent.raycastTarget = true;
 
                     StandardMenuButton? button = reminderObject.GetComponent<StandardMenuButton>();
@@ -190,9 +182,7 @@ namespace BBPC.Patches
                 }
                 else
                 {
-                    localizer.key = ReminderLocalizationKey;
-                    localizer.RefreshLocalization();
-
+                    textComponent.ApplyLocalization(ReminderLocalizationKey, true);
                     textComponent.raycastTarget = false;
 
                     StandardMenuButton? button = reminderObject.GetComponent<StandardMenuButton>();

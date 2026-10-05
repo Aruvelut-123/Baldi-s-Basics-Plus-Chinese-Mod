@@ -1,6 +1,7 @@
 using BBPC.API;
 using HarmonyLib;
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using MTM101BaldAPI;
 
@@ -26,12 +27,8 @@ namespace BBPC.Patches
                 Transform textTransform = tutorialManager.transform.Find("DefaultCanvas/Text");
                 if (textTransform != null)
                 {
-                    TextLocalizer existingLocalizer = textTransform.GetComponent<TextLocalizer>();
-                    if (existingLocalizer == null)
-                    {
-                        TextLocalizer localizer = textTransform.gameObject.AddComponent<TextLocalizer>();
-                        localizer.key = "BBPC_Tutorial_DefaultCanvas";
-                    }
+                    TextMeshProUGUI? textComponent = textTransform.GetComponent<TextMeshProUGUI>();
+                    textComponent?.ApplyLocalization("BBPC_Tutorial_DefaultCanvas", true);
                 }
             }
         }

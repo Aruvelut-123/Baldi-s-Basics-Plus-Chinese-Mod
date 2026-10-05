@@ -1,12 +1,14 @@
+using BBPC.API;
 using MTM101BaldAPI;
 using HarmonyLib;
 using MTM101BaldAPI.AssetTools;
-using MTM101BaldAPI.ErrorHandler;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -38,6 +40,12 @@ namespace BBPC.Patches
             { "Main Credits/Text", "BBPC_Credits_MainTitleText" },
             { "Main Credits/TrademarkText", "BBPC_Credits_UnityDisclaimerText" }
         };
+
+        private static int cachedCreditsSceneHandle = -1;
+        private static readonly List<Canvas> cachedCreditsScreens = new List<Canvas>();
+        private static GameObject? cachedExtraCreditsScreen;
+        private static GameObject? cachedAllBackers;
+        private static GameObject? cachedMainCredits;
         
         [HarmonyPatch(typeof(SceneManager), "LoadScene", new[] { typeof(string) })]
         private static class LoadScenePatch
@@ -45,12 +53,20 @@ namespace BBPC.Patches
             [HarmonyPostfix]
             private static void Postfix(string sceneName)
             {
-                if (sceneName == "Credits")
+                if (!string.Equals(sceneName, "Credits", StringComparison.Ordinal))
                 {
-                    GameObject patchInitializer = new GameObject("CreditsPatchInitializer");
-                    patchInitializer.AddComponent<CreditsPatchInitializer>();
-                    Object.DontDestroyOnLoad(patchInitializer);
+                    return;
                 }
+
+                ResetSceneCaches();
+                if (GameObject.Find("CreditsPatchInitializer") != null)
+                {
+                    return;
+                }
+
+                GameObject patchInitializer = new GameObject("CreditsPatchInitializer");
+                patchInitializer.AddComponent<CreditsPatchInitializer>();
+                UnityEngine.Object.DontDestroyOnLoad(patchInitializer);
             }
         }
 
@@ -176,18 +192,16 @@ namespace BBPC.Patches
             [HarmonyPostfix]
             private static void Postfix(Credits __instance)
             {
-                GameObject gameObject = GameObject.Find("ExtraCreditsScreen(0)");
-                GameObject gameObject2 = GameObject.Find("All Backers");
-                GameObject gameObject3 = GameObject.Find("Main Credits");
-                if (gameObject != null && gameObject2 != null)
+                EnsureCreditsObjectsCached();
+                if (cachedExtraCreditsScreen != null && cachedAllBackers != null)
                 {
-                    bool flag = gameObject.activeSelf && gameObject2.activeSelf;
-                    gameObject2.SetActive(!flag);
+                    bool shouldShowBackers = !cachedExtraCreditsScreen.activeSelf || !cachedAllBackers.activeSelf;
+                    cachedAllBackers.SetActive(shouldShowBackers);
                 }
-                else if (gameObject == null && gameObject2 != null && gameObject3 != null)
+                else if (cachedExtraCreditsScreen == null && cachedAllBackers != null && cachedMainCredits != null)
                 {
-                    bool flag = gameObject3.activeSelf && gameObject2.activeSelf;
-                    gameObject2.SetActive(!flag);
+                    bool shouldShowBackers = !cachedMainCredits.activeSelf || !cachedAllBackers.activeSelf;
+                    cachedAllBackers.SetActive(shouldShowBackers);
                 }
             }
         }
@@ -197,66 +211,88 @@ namespace BBPC.Patches
             ApplyLocalizationToAllCreditsObjects();
         }
 
+        private static void ResetSceneCaches()
+        {
+            cachedCreditsSceneHandle = -1;
+            cachedCreditsScreens.Clear();
+            cachedExtraCreditsScreen = null;
+            cachedAllBackers = null;
+            cachedMainCredits = null;
+        }
+
+        private static void EnsureCreditsObjectsCached()
+        {
+            int sceneHandle = SceneManager.GetActiveScene().handle;
+            if (sceneHandle != cachedCreditsSceneHandle)
+            {
+                cachedCreditsSceneHandle = sceneHandle;
+                cachedCreditsScreens.Clear();
+                cachedExtraCreditsScreen = null;
+                cachedAllBackers = null;
+                cachedMainCredits = null;
+            }
+
+            if (cachedExtraCreditsScreen == null)
+            {
+                cachedExtraCreditsScreen = GameObject.Find("ExtraCreditsScreen(0)");
+            }
+            if (cachedAllBackers == null)
+            {
+                cachedAllBackers = GameObject.Find("All Backers");
+            }
+            if (cachedMainCredits == null)
+            {
+                cachedMainCredits = GameObject.Find("Main Credits");
+            }
+        }
+
         private static void ApplyLocalizationToAllCreditsObjects()
         {
-
-            Canvas[] screens = Resources.FindObjectsOfTypeAll<Canvas>();
-            foreach (Canvas screen in screens)
+            EnsureCreditsObjectsCached();
+            if (cachedCreditsScreens.Count == 0)
             {
-                if (screen.name.StartsWith("Main Credits"))
+                cachedCreditsScreens.AddRange(Resources.FindObjectsOfTypeAll<Canvas>()
+                    .Where(screen => screen != null && screen.name.StartsWith("Main Credits", StringComparison.Ordinal)));
+            }
+
+            foreach (Canvas screen in cachedCreditsScreens)
+            {
+                if (screen != null)
                 {
                     ApplyLocalizationDirectly(screen.transform);
-
-                    ProcessChildren(screen.transform);
                 }
             }
         }
 
-        private static void ProcessChildren(Transform parent)
+        private static void ApplyLocalizationDirectly(Transform screen)
         {
-            foreach (Transform child in parent)
+            if (screen == null || !screen.name.StartsWith("Main Credits", StringComparison.Ordinal))
             {
-                ApplyLocalizationDirectly(child);
-                ProcessChildren(child);
+                return;
             }
-        }
 
-        private static void ApplyLocalizationDirectly(Transform obj)
-        {
-            foreach (var kvp in localizationKeys)
+            foreach (KeyValuePair<string, string> entry in localizationKeys)
             {
-                string fullPath = GetFullPath(obj);
-
-                if (fullPath == kvp.Key)
+                int separator = entry.Key.IndexOf('/');
+                if (separator <= 0 ||
+                    !string.Equals(screen.name, entry.Key.Substring(0, separator), StringComparison.Ordinal))
                 {
-                    ApplyLocalizationToComponent(obj.gameObject, kvp.Value);
-                    break;
+                    continue;
                 }
-            }
-        }
 
-        private static string GetFullPath(Transform obj)
-        {
-            if (obj.parent == null || obj.parent.name.Contains("Canvas"))
-            {
-                return obj.name;
-            }
-            else
-            {
-                return obj.parent.name + "/" + obj.name;
+                string relativePath = entry.Key.Substring(separator + 1);
+                Transform? target = screen.Find(relativePath);
+                if (target != null)
+                {
+                    ApplyLocalizationToComponent(target.gameObject, entry.Value);
+                }
             }
         }
 
         private static void ApplyLocalizationToComponent(GameObject textObject, string key)
         {
-            TextMeshProUGUI textComponent = textObject.GetComponent<TextMeshProUGUI>();
-            if (textComponent != null)
-            {
-                TextLocalizer localizer = textObject.GetComponent<TextLocalizer>() ?? textObject.AddComponent<TextLocalizer>();
-                localizer.key = key;
-
-                localizer.RefreshLocalization();
-            }
+            TextMeshProUGUI? textComponent = textObject.GetComponent<TextMeshProUGUI>();
+            textComponent?.ApplyLocalization(key, true);
         }
     }
 
@@ -272,15 +308,15 @@ namespace BBPC.Patches
             if (frameCounter > framesToWait)
             {
                 CreditsPatch.ApplyLocalizationToCredits();
-                Destroy(this);
+                Destroy(gameObject);
             }
         }
     }
     public class Credit
     {
-        private string mod_path;
+        private readonly string mod_path;
         private string credits_page = string.Empty;
-        private string credits_default = "{\r\n    \"pages\": [\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组</b>\",\r\n                \"\\n\",\r\n                \"汉化模组/安装程序:\",\r\n                \"Baymaxawa\",\r\n                \"文本/贴图汉化:\",\r\n                \"MMZ\"\r\n            ]\r\n        },\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组</b>\",\r\n                \"\\n\",\r\n                \"润色: 馒\\n\",\r\n                \"TMP字体: cgq\\n\",\r\n                \"特别鸣谢: ChatGPT、Deepseek\"\r\n            ]\r\n        },\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组</b>\",\r\n                \"\\n\",\r\n                \"感谢所有在群内参与测试和提供的人员!\",\r\n                \"没有你们很难做到这里!\"\r\n            ]\r\n        },\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组 赞助人员名单</b>\",\r\n                \"\\n\",\r\n                \"{AFDIAN_SPONSERS}\"\r\n            ]\r\n        }\r\n    ]\r\n}";
+        private const string CreditsDefault = "{\r\n    \"pages\": [\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组</b>\",\r\n                \"\\n\",\r\n                \"汉化模组/安装程序:\",\r\n                \"Baymaxawa\",\r\n                \"文本/贴图汉化:\",\r\n                \"MMZ\"\r\n            ]\r\n        },\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组</b>\",\r\n                \"\\n\",\r\n                \"润色: 馒\\n\",\r\n                \"TMP字体: cgq\\n\",\r\n                \"特别鸣谢: ChatGPT、Deepseek\"\r\n            ]\r\n        },\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组</b>\",\r\n                \"\\n\",\r\n                \"感谢所有在群内参与测试和提供的人员!\",\r\n                \"没有你们很难做到这里!\"\r\n            ]\r\n        },\r\n        {\r\n            \"text\": [\r\n                \"<b>BB+汉化模组 赞助人员名单</b>\",\r\n                \"\\n\",\r\n                \"{AFDIAN_SPONSERS}\"\r\n            ]\r\n        }\r\n    ]\r\n}";
         public static JObject credit_json = new JObject();
         public static string[] sponsers = new string[] { "爱发电用户_e57b1", "爱发电用户_40217", "Mrothen", "slxsh89" };
 
@@ -296,41 +332,12 @@ namespace BBPC.Patches
         {
             try
             {
-                bool flag = this.mod_path != null && this.mod_path != "";
-                if (flag)
-                {
-                    bool flag2 = !Directory.Exists(this.mod_path);
-                    if (flag2)
-                    {
-                        Directory.CreateDirectory(this.mod_path);
-                    }
-                    bool flag3 = !File.Exists(this.credits_page);
-                    if (flag3)
-                    {
-                        byte[] bytes = Encoding.UTF8.GetBytes(this.credits_default);
-                        using (FileStream fileStream = new FileStream(this.credits_page, FileMode.Create, FileAccess.Write))
-                        {
-                            fileStream.Write(bytes, 0, bytes.Length);
-                        }
-                        StreamReader streamReader = File.OpenText(this.credits_page);
-                        JsonTextReader jsonTextReader = new JsonTextReader(streamReader);
-                        Credit.credit_json = (JObject)JToken.ReadFrom(jsonTextReader);
-                        streamReader.Close();
-                    }
-                    else
-                    {
-                        StreamReader streamReader2 = File.OpenText(this.credits_page);
-                        JsonTextReader jsonTextReader2 = new JsonTextReader(streamReader2);
-                        Credit.credit_json = (JObject)JToken.ReadFrom(jsonTextReader2);
-                        streamReader2.Close();
-                    }
-                }
-                else
+                if (!LoadCredits())
                 {
                     API.Logger.Error("Error when trying to get mod_path!");
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 API.Logger.Error(ex.Message);
             }
@@ -338,35 +345,44 @@ namespace BBPC.Patches
 
         public void reload()
         {
-            bool flag = this.mod_path != null && this.mod_path != "";
-            if (flag)
+            try
             {
-                bool flag2 = !File.Exists(this.credits_page);
-                if (flag2)
+                if (!LoadCredits())
                 {
-                    byte[] bytes = Encoding.UTF8.GetBytes(this.credits_default);
-                    using (FileStream fileStream = new FileStream(this.credits_page, FileMode.Create, FileAccess.Write))
-                    {
-                        fileStream.Write(bytes, 0, bytes.Length);
-                    }
-                    StreamReader streamReader = File.OpenText(this.credits_page);
-                    JsonTextReader jsonTextReader = new JsonTextReader(streamReader);
-                    Credit.credit_json = (JObject)JToken.ReadFrom(jsonTextReader);
-                    streamReader.Close();
-                }
-                else
-                {
-                    StreamReader streamReader2 = File.OpenText(this.credits_page);
-                    JsonTextReader jsonTextReader2 = new JsonTextReader(streamReader2);
-                    Credit.credit_json = (JObject)JToken.ReadFrom(jsonTextReader2);
-                    streamReader2.Close();
+                    API.Logger.Error("Error when trying to get mod_path!");
                 }
             }
-            else
+            catch (Exception ex)
             {
-                ErrorDisplayer.allErrorDisplayers[0].ShowError("Error when trying to get mod_path", 10f);
+                API.Logger.Error(ex.Message);
+            }
+        }
+
+        private bool LoadCredits()
+        {
+            if (string.IsNullOrEmpty(mod_path))
+            {
+                return false;
             }
 
+            string? parentDirectory = Path.GetDirectoryName(credits_page);
+            if (!string.IsNullOrEmpty(parentDirectory) && !Directory.Exists(parentDirectory))
+            {
+                Directory.CreateDirectory(parentDirectory);
+            }
+
+            if (!File.Exists(credits_page))
+            {
+                File.WriteAllBytes(credits_page, Encoding.UTF8.GetBytes(CreditsDefault));
+            }
+
+            using (StreamReader streamReader = File.OpenText(credits_page))
+            using (JsonTextReader jsonTextReader = new JsonTextReader(streamReader))
+            {
+                credit_json = (JObject)JToken.ReadFrom(jsonTextReader);
+            }
+
+            return true;
         }
 
     }

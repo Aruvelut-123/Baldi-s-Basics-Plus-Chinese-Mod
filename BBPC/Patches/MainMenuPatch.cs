@@ -2,6 +2,7 @@ using BBPC.API;
 using HarmonyLib;
 using MTM101BaldAPI;
 using MTM101BaldAPI.UI;
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -13,31 +14,37 @@ namespace BBPC.Patches
     {
         private TextMeshProUGUI textComponent = null!;
         private RectTransform arrowRect = null!;
+        private string? lastText;
+        private bool hasLayout;
 
         public void Initialize(TextMeshProUGUI text, RectTransform arrow)
         {
             textComponent = text;
             arrowRect = arrow;
+            arrowRect.anchorMin = new Vector2(0.5f, 0.5f);
+            arrowRect.anchorMax = new Vector2(0.5f, 0.5f);
+            arrowRect.pivot = new Vector2(0.5f, 0.5f);
         }
 
-        void LateUpdate()
+        private void LateUpdate()
         {
-            if (textComponent != null && arrowRect != null)
+            if (textComponent == null || arrowRect == null ||
+                (hasLayout && string.Equals(lastText, textComponent.text, StringComparison.Ordinal)))
             {
-                textComponent.ForceMeshUpdate();
-                var textInfo = textComponent.textInfo;
-
-                if (textInfo.characterCount > 0)
-                {
-                    var lastVisibleCharInfo = textInfo.characterInfo[textInfo.characterCount - 1];
-                    float textEdgeX = lastVisibleCharInfo.topRight.x;
-
-                    arrowRect.anchorMin = new Vector2(0.5f, 0.5f);
-                    arrowRect.anchorMax = new Vector2(0.5f, 0.5f);
-                    arrowRect.pivot = new Vector2(0.5f, 0.5f);
-                    arrowRect.anchoredPosition = new Vector2(textEdgeX + 5f, 2.4f);
-                }
+                return;
             }
+
+            textComponent.ForceMeshUpdate();
+            TMP_TextInfo textInfo = textComponent.textInfo;
+            if (textInfo.characterCount == 0)
+            {
+                return;
+            }
+
+            TMP_CharacterInfo lastVisibleCharInfo = textInfo.characterInfo[textInfo.characterCount - 1];
+            arrowRect.anchoredPosition = new Vector2(lastVisibleCharInfo.topRight.x + 5f, 2.4f);
+            lastText = textComponent.text;
+            hasLayout = true;
         }
     }
 
@@ -134,12 +141,6 @@ namespace BBPC.Patches
             {
                 textComponent.raycastTarget = true;
 
-                TextLocalizer? localizer = textComponent.GetComponent<TextLocalizer>();
-                if (localizer == null)
-                {
-                    localizer = textComponent.gameObject.AddComponent<TextLocalizer>();
-                }
-                
                 GameObject arrowObject = new GameObject("DropdownArrow", typeof(RectTransform));
                 arrowObject.transform.SetParent(modInfo.transform, false);
                 
@@ -165,8 +166,7 @@ namespace BBPC.Patches
                 
                 dropdownArrow = arrowRect;
                 
-                localizer.key = "BBPC_Menu_ModInfo";
-                localizer.RefreshLocalization();
+                textComponent.ApplyLocalization("BBPC_Menu_ModInfo", true);
 
                 StandardMenuButton button = textComponent.gameObject.ConvertToButton<StandardMenuButton>(true);
                 button.underlineOnHigh = true;

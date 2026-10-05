@@ -172,20 +172,7 @@ namespace BBPC.Patches
                     {
                         textComponent = elementTransform.GetComponentInChildren<TextMeshProUGUI>();
                     }
-                    if (textComponent != null)
-                    {
-                        Component[] components = textComponent.GetComponents<Component>();
-                        foreach (Component component in components)
-                        {
-                            if (component != null && component.GetType().Name == "TextLocalizer" && component.GetType() != typeof(TextLocalizer))
-                            {
-                                UnityEngine.Object.Destroy(component);
-                            }
-                        }
-                        
-                        TextLocalizer customLocalizer = textComponent.gameObject.AddComponent<TextLocalizer>();
-                        customLocalizer.key = "BBPC_Elevator_TimeBonusValue";
-                    }
+                    textComponent?.ApplyLocalization("BBPC_Elevator_TimeBonusValue");
                 }
             }
         }
@@ -196,29 +183,7 @@ namespace BBPC.Patches
             if (errorTransform != null)
             {
                 TextMeshProUGUI? textComponent = errorTransform.GetComponent<TextMeshProUGUI>();
-                if (textComponent != null)
-                {
-                    Component[] components = errorTransform.GetComponents<Component>();
-                    foreach (Component component in components)
-                    {
-                        if (component != null && component.GetType().Name == "TextLocalizer" && component.GetType() != typeof(TextLocalizer))
-                        {
-                            UnityEngine.Object.Destroy(component);
-                        }
-                    }
-                    
-                    TextLocalizer? localizer = textComponent.GetComponent<TextLocalizer>();
-                    if (localizer == null)
-                    {
-                        localizer = textComponent.gameObject.AddComponent<TextLocalizer>();
-                        localizer.key = "BBPC_GeneratorError_Text";
-                    }
-                    else if (localizer.key != "BBPC_GeneratorError_Text")
-                    {
-                        localizer.key = "BBPC_GeneratorError_Text";
-                        localizer.RefreshLocalization();
-                    }
-                }
+                textComponent?.ApplyLocalization("BBPC_GeneratorError_Text");
             }
         }
         

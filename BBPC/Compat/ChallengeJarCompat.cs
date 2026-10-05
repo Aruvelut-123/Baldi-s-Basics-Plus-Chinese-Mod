@@ -9,7 +9,9 @@ using BBPC.API;
 namespace BBPC.Compat
 {
     /// <summary>
-    /// ChallengeJar（bbplus.challengejar）扩展兼容层�?    /// 模组存在时，为其两个菜单应用本地化文本�?    /// 原实现：feat/challengejar 分支 ChallengeExtraMenuPatch / PickDifficultyMenuPatch�?    /// </summary>
+    /// ChallengeJar (bbplus.challengejar) compatibility layer.
+    /// Localizes the challenge and difficulty menus when the optional mod is loaded.
+    /// </summary>
     public static class ChallengeJarCompat
     {
         public const string ModGuid = "bbplus.challengejar";

@@ -13,10 +13,12 @@ using BBPC.API;
 namespace BBPC.Compat
 {
     /// <summary>
-    /// ModManager（mtm101.rulerp.baldiplus.modmanager）扩展兼容层�?    /// 包含：BasePlugin.OnMenu 前缀（在选项中注�?Mod Manager 分类）�?    /// ModManager.Build / Update 后缀、ModInfo 构�?/ SetActive 后缀�?    /// 原实现：feat/ModManager 分支 BasePluginPatch.cs / ModManagerPatch.cs / ModInfoPatch.cs�?    /// </summary>
+    /// ModManager (mtm101.rulerp.baldiplus.modmanager) compatibility layer.
+    /// Localizes the category, manager UI, ModInfo toggle, and tooltips.
+    /// </summary>
     public static class ModManagerCompat
     {
-        public const string ModGuid = "mtm101.rulerp.baldiplus.modmanager";
+        public const string ModGuid = "rost.moment.baldiplus.modmanager";
         private const string AssemblyName = "ModManager";
         private const string ModManagerTypeName = "ModManager.ModManager";
         private const string ModInfoTypeName = "ModManager.ModInfo";
@@ -36,7 +38,7 @@ namespace BBPC.Compat
             _modManagerType = CompatReflection.FindType(AssemblyName, ModManagerTypeName);
             _modInfoType = CompatReflection.FindType(AssemblyName, ModInfoTypeName);
 
-            // 1) BasePlugin.OnMenu：前缀拦截，注�?Mod Manager 分类
+            // 1) BasePlugin.OnMenu: inject the Mod Manager category.
             Type? basePluginType = CompatReflection.FindTypeBySimpleName(AssemblyName, "BasePlugin");
             MethodInfo? onMenu = basePluginType == null ? null : AccessTools.Method(basePluginType, "OnMenu");
             if (onMenu != null)
@@ -85,7 +87,7 @@ namespace BBPC.Compat
 
         // ---------- BasePlugin.OnMenu ----------
 
-        private static bool BasePluginOnMenuPrefix(OptionsMenu __instance, CustomOptionsHandler handler)
+        private static bool BasePluginOnMenuPrefix(OptionsMenu __0, CustomOptionsHandler handler)
         {
             if (BBPCTemp.is_eng || _modManagerType == null || handler == null) return true;
 
@@ -115,18 +117,8 @@ namespace BBPC.Compat
 
             TextMeshProUGUI? modInfo = CompatReflection.GetInstance(__instance, "modInfo") as TextMeshProUGUI;
             TextMeshProUGUI? modName = CompatReflection.GetInstance(__instance, "modName") as TextMeshProUGUI;
-            if (modInfo != null)
-            {
-                TextLocalizer modInfoTL = modInfo.gameObject.GetComponent<TextLocalizer>() ?? modInfo.gameObject.AddComponent<TextLocalizer>();
-                modInfoTL.key = "MMg_If_See";
-                modInfoTL.RefreshLocalization();
-            }
-            if (modName != null)
-            {
-                TextLocalizer modNameTL = modName.gameObject.GetComponent<TextLocalizer>() ?? modName.gameObject.AddComponent<TextLocalizer>();
-                modNameTL.key = "MMg_If_See";
-                modNameTL.RefreshLocalization();
-            }
+            modInfo?.ApplyLocalization("MMg_If_See", true);
+            modName?.ApplyLocalization("MMg_If_See", true);
 
             if (__instance is Component comp)
             {
@@ -198,9 +190,7 @@ namespace BBPC.Compat
             TextMeshProUGUI? toggleText = ___toggle.gameObject.GetComponentInChildren<TextMeshProUGUI>();
             if (toggleText == null) return;
 
-            TextLocalizer toggleLocalizer = toggleText.gameObject.GetComponent<TextLocalizer>() ?? toggleText.gameObject.AddComponent<TextLocalizer>();
-            toggleLocalizer.key = "MMg_Active";
-            toggleLocalizer.RefreshLocalization();
+            toggleText.ApplyLocalization("MMg_Active", true);
 
             if (_modInfoType != null && _addTooltipToggleMethod != null)
             {

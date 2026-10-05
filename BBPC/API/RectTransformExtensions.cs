@@ -1,5 +1,5 @@
+using System;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 
 namespace BBPC.API
@@ -8,48 +8,55 @@ namespace BBPC.API
     {
         public static Transform? FindTransform(this Transform parent, string path)
         {
-            var children = parent.GetComponentsInChildren<Transform>(true);
-            foreach (var child in children)
+            if (parent == null || string.IsNullOrEmpty(path)) return null;
+            return parent.Find(path);
+        }
+
+        /// <summary>
+        /// A snapshot of relative paths, including inactive children. The first
+        /// duplicate path wins, matching the original depth-first hierarchy scan.
+        /// Build once per batch rather than caching across scene/hierarchy changes.
+        /// </summary>
+        public static Dictionary<string, Transform> BuildPathMap(this Transform parent)
+        {
+            var result = new Dictionary<string, Transform>(StringComparer.Ordinal);
+            if (parent == null) return result;
+
+            var paths = new Dictionary<Transform, string> { [parent] = string.Empty };
+            foreach (Transform child in parent.GetComponentsInChildren<Transform>(true))
             {
                 if (child == parent) continue;
-                if (GetPath(parent, child) == path)
-                {
-                    return child;
-                }
+                string path = GetPath(parent, child, paths);
+                if (!result.ContainsKey(path)) result.Add(path, child);
             }
-            return null;
+
+            return result;
         }
 
-        private static string GetPath(Transform parent, Transform target)
+        private static string GetPath(Transform root, Transform child, Dictionary<Transform, string> paths)
         {
-            if (target == null || parent == null || target == parent) return "";
-            
-            StringBuilder pathBuilder = new StringBuilder();
-            Transform current = target;
-            while (current != null && current != parent)
-            {
-                if (pathBuilder.Length > 0)
-                    pathBuilder.Insert(0, "/");
-                pathBuilder.Insert(0, current.name);
-                current = current.parent;
-            }
-            
-            return (current == parent) ? pathBuilder.ToString() : "";
+            if (paths.TryGetValue(child, out string path)) return path;
+            Transform parent = child.parent;
+            string prefix = parent == root ? string.Empty : GetPath(root, parent, paths) + "/";
+            path = prefix + child.name;
+            paths.Add(child, path);
+            return path;
         }
 
-        private static void ProcessTargets(this Transform root, IEnumerable<KeyValuePair<string, Vector2>> targets, System.Action<RectTransform, Vector2> applyAction)
+        private static void ProcessTargets(this Transform root,
+            IEnumerable<KeyValuePair<string, Vector2>> targets,
+            Action<RectTransform, Vector2> applyAction)
         {
-            foreach (var target in targets)
+            if (root == null || targets == null) return;
+            Dictionary<string, Transform>? paths = null;
+            foreach (KeyValuePair<string, Vector2> target in targets)
             {
-                Transform? elementTransform = root.FindTransform(target.Key);
-
-                if (elementTransform != null)
+                // Don't scan at all for an empty batch.
+                paths ??= root.BuildPathMap();
+                if (paths.TryGetValue(target.Key, out Transform child) &&
+                    child.GetComponent<RectTransform>() is RectTransform rect)
                 {
-                    RectTransform? rectTransform = elementTransform.GetComponent<RectTransform>();
-                    if (rectTransform != null)
-                    {
-                        applyAction(rectTransform, target.Value);
-                    }
+                    applyAction(rect, target.Value);
                 }
             }
         }
@@ -74,4 +81,4 @@ namespace BBPC.API
             root.ProcessTargets(targets, (rect, value) => rect.offsetMax = value);
         }
     }
-} 
+}

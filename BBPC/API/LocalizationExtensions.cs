@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -6,38 +7,83 @@ namespace BBPC.API
 {
     public static class LocalizationExtensions
     {
-        public static void ApplyLocalizations(this Transform root, IReadOnlyDictionary<string, string> targets, bool forceRefresh = false)
+        /// <summary>
+        /// Ensures that a UI text uses BBPC's localizer and refreshes it when needed.
+        /// External components with the same simple type name are removed first so
+        /// the translation is always handled by BBPC.TextLocalizer.
+        /// </summary>
+        public static TextLocalizer? ApplyLocalization(this TextMeshProUGUI textComponent,
+            string key,
+            bool forceRefresh = false)
         {
-            if (root == null) return;
-
-            foreach (var target in targets)
+            if (textComponent == null || string.IsNullOrEmpty(key))
             {
-                Transform? elementTransform = root.FindTransform(target.Key);
+                return null;
+            }
 
-                if (elementTransform != null)
+            RemoveForeignLocalizers(textComponent);
+            TextLocalizer localizer = textComponent.GetComponent<TextLocalizer>()
+                ?? textComponent.gameObject.AddComponent<TextLocalizer>();
+
+            if (forceRefresh || !string.Equals(localizer.key, key, StringComparison.Ordinal))
+            {
+                localizer.key = key;
+                localizer.RefreshLocalization();
+            }
+
+            return localizer;
+        }
+
+        public static TextLocalizer? ApplyLocalization(this TMP_Text textComponent,
+            string key,
+            bool forceRefresh = false)
+        {
+            return textComponent is TextMeshProUGUI textMesh
+                ? textMesh.ApplyLocalization(key, forceRefresh)
+                : null;
+        }
+
+        public static TextLocalizer? ApplyLocalization(this GameObject gameObject,
+            string key,
+            bool forceRefresh = false)
+        {
+            return gameObject == null
+                ? null
+                : gameObject.GetComponent<TextMeshProUGUI>()?.ApplyLocalization(key, forceRefresh);
+        }
+
+        public static void ApplyLocalizations(this Transform root,
+            IReadOnlyDictionary<string, string> targets,
+            bool forceRefresh = false)
+        {
+            if (root == null || targets == null)
+            {
+                return;
+            }
+
+            if (targets.Count == 0) return;
+            Dictionary<string, Transform> paths = root.BuildPathMap();
+            foreach (KeyValuePair<string, string> target in targets)
+            {
+                if (paths.TryGetValue(target.Key, out Transform elementTransform))
                 {
-                    var textComponent = elementTransform.GetComponent<TextMeshProUGUI>();
-                    if (textComponent != null)
-                    {
-                        Component[] components = textComponent.GetComponents<Component>();
-                        foreach (Component component in components)
-                        {
-                            if (component != null && component.GetType().Name == "TextLocalizer" && component.GetType() != typeof(TextLocalizer))
-                            {
-                                Object.Destroy(component);
-                            }
-                        }
+                    TextMeshProUGUI textComponent = elementTransform.GetComponent<TextMeshProUGUI>();
+                    if (textComponent != null) textComponent.ApplyLocalization(target.Value, forceRefresh);
+                }
+            }
+        }
 
-                        var localizer = textComponent.GetComponent<TextLocalizer>() ?? textComponent.gameObject.AddComponent<TextLocalizer>();
-                        
-                        if (localizer.key != target.Value || forceRefresh)
-                        {
-                            localizer.key = target.Value;
-                            localizer.RefreshLocalization();
-                        }
-                    }
+        private static void RemoveForeignLocalizers(Component textComponent)
+        {
+            foreach (Component component in textComponent.GetComponents<Component>())
+            {
+                if (component != null &&
+                    component.GetType().Name == nameof(TextLocalizer) &&
+                    component.GetType() != typeof(TextLocalizer))
+                {
+                    UnityEngine.Object.Destroy(component);
                 }
             }
         }
     }
-} 
+}

@@ -14,10 +14,12 @@ using BBPC.API;
 namespace BBPC.Compat
 {
     /// <summary>
-    /// BaldiTexturePacks（pixelguy.pixelmodding.baldiplus.texturepacks）扩展兼容层�?    /// 包含：主菜单注入 Texture Pack 分类；无包时创建提示按钮；包按钮悬停 tooltip 本地化�?    /// 原实现：feat/texturepack 分支 PackManagerScreenPatch.cs / TexturePacksPluginPatch.cs�?    /// </summary>
+    /// BaldiTexturePacks (mtm101.rulerp.baldiplus.texturepacks) compatibility layer.
+    /// Adds the main-menu category, empty-pack message, and localized pack tooltips.
+    /// </summary>
     public static class TexturePackCompat
     {
-        public const string ModGuid = "pixelguy.pixelmodding.baldiplus.texturepacks";
+        public const string ModGuid = "mtm101.rulerp.baldiplus.texturepacks";
         private const string AssemblyName = "BaldiTexturePacks";
         private const string PluginTypeName = "BaldiTexturePacks.TexturePacksPlugin";
         private const string ScreenTypeName = "BaldiTexturePacks.PackManagerScreen";
@@ -80,7 +82,7 @@ namespace BBPC.Compat
 
         // ---------- TexturePacksPlugin.AddCategory ----------
 
-        private static bool AddCategoryPrefix(OptionsMenu __instance, CustomOptionsHandler handler)
+        private static bool AddCategoryPrefix(OptionsMenu __0, CustomOptionsHandler handler)
         {
             if (BBPCTemp.is_eng || handler == null || _screenType == null) return true;
 

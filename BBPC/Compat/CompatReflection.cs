@@ -1,110 +1,238 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-
-using BBPC.API;
 
 namespace BBPC.Compat
 {
     /// <summary>
-    /// 反射辅助工具：用于在 main 中检测外部扩展模组程序集/类型是否存在�?    /// 这样 main 编译时无需引用任何模组 dll（纯软兼容）�?    /// </summary>
+    /// Reflection helpers for optional extension assemblies.
+    /// Positive lookups are cached because these methods run during menu updates.
+    /// </summary>
     internal static class CompatReflection
     {
-        /// <summary>在已加载程序集中按程序集名查找程序集�?/summary>
+        private const BindingFlags StaticFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
+        private const BindingFlags InstanceFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
+        private static readonly object CacheLock = new object();
+        private static readonly Dictionary<string, Assembly> AssemblyCache = new Dictionary<string, Assembly>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, Type> TypeCache = new Dictionary<string, Type>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, MemberInfo> MemberCache = new Dictionary<string, MemberInfo>(StringComparer.Ordinal);
+
         public static Assembly? FindAssembly(string assemblyName)
         {
+            if (string.IsNullOrEmpty(assemblyName))
+            {
+                return null;
+            }
+
+            lock (CacheLock)
+            {
+                if (AssemblyCache.TryGetValue(assemblyName, out Assembly cachedAssembly))
+                {
+                    return cachedAssembly;
+                }
+            }
+
+            Assembly? assembly;
             try
             {
-                return AppDomain.CurrentDomain.GetAssemblies()
-                    .FirstOrDefault(a => a.GetName().Name == assemblyName);
+                assembly = AppDomain.CurrentDomain.GetAssemblies()
+                    .FirstOrDefault(candidate => string.Equals(candidate.GetName().Name, assemblyName, StringComparison.Ordinal));
             }
             catch
             {
                 return null;
             }
+
+            if (assembly != null)
+            {
+                lock (CacheLock)
+                {
+                    AssemblyCache[assemblyName] = assembly;
+                }
+            }
+
+            return assembly;
         }
 
-        /// <summary>按全名查找类型，例如 "ChallengeJar.Menu.ChallengeExtraMenu"�?/summary>
         public static Type? FindType(string assemblyName, string typeFullName)
         {
-            Assembly? asm = FindAssembly(assemblyName);
-            if (asm == null) return null;
+            if (string.IsNullOrEmpty(typeFullName))
+            {
+                return null;
+            }
+
+            string cacheKey = assemblyName + "\0" + typeFullName;
+            lock (CacheLock)
+            {
+                if (TypeCache.TryGetValue(cacheKey, out Type cachedType))
+                {
+                    return cachedType;
+                }
+            }
+
+            Assembly? assembly = FindAssembly(assemblyName);
+            Type? type;
             try
             {
-                return asm.GetType(typeFullName, false);
+                type = assembly?.GetType(typeFullName, false);
             }
             catch
             {
                 return null;
             }
+
+            if (type != null)
+            {
+                lock (CacheLock)
+                {
+                    TypeCache[cacheKey] = type;
+                }
+            }
+
+            return type;
         }
 
-        /// <summary>按简单类型名（忽略命名空间）在指定程序集中查找类型�?/summary>
         public static Type? FindTypeBySimpleName(string assemblyName, string simpleName)
         {
-            Assembly? asm = FindAssembly(assemblyName);
-            if (asm == null) return null;
+            if (string.IsNullOrEmpty(simpleName))
+            {
+                return null;
+            }
+
+            string cacheKey = assemblyName + "\0*" + simpleName;
+            lock (CacheLock)
+            {
+                if (TypeCache.TryGetValue(cacheKey, out Type cachedType))
+                {
+                    return cachedType;
+                }
+            }
+
+            Assembly? assembly = FindAssembly(assemblyName);
+            if (assembly == null)
+            {
+                return null;
+            }
+
+            IEnumerable<Type> types;
             try
             {
-                return asm.GetTypes().FirstOrDefault(t => t.Name == simpleName);
+                types = assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                types = ex.Types.Where(type => type != null).Cast<Type>();
             }
             catch
             {
                 return null;
             }
+
+            Type? type = types.FirstOrDefault(candidate =>
+                string.Equals(candidate.Name, simpleName, StringComparison.Ordinal));
+            if (type != null)
+            {
+                lock (CacheLock)
+                {
+                    TypeCache[cacheKey] = type;
+                }
+            }
+
+            return type;
         }
 
-        /// <summary>读取静态字�?属性（target �?Type �?null）�?/summary>
         public static object? GetStatic(object? target, string name)
         {
             Type? type = target as Type ?? target?.GetType();
-            if (type == null) return null;
-            try
-            {
-                FieldInfo? field = type.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-                if (field != null) return field.GetValue(null);
-                PropertyInfo? prop = type.GetProperty(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-                return prop?.GetValue(null, null);
-            }
-            catch
+            MemberInfo? member = type == null ? null : FindMember(type, name, true);
+            return ReadMember(member, null);
+        }
+
+        public static object? GetInstance(object? target, string name)
+        {
+            if (target == null)
             {
                 return null;
             }
+
+            MemberInfo? member = FindMember(target.GetType(), name, false);
+            return ReadMember(member, target);
         }
 
-        /// <summary>读取实例字段/属性�?/summary>
-        public static object? GetInstance(object target, string name)
+        public static int GetCount(object? collection)
         {
-            if (target == null) return null;
-            Type type = target.GetType();
-            try
-            {
-                FieldInfo? field = type.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                if (field != null) return field.GetValue(target);
-                PropertyInfo? prop = type.GetProperty(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                return prop?.GetValue(target, null);
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        /// <summary>读取集合/数组�?Count/Length�?/summary>
-        public static int GetCount(object collection)
-        {
-            if (collection == null) return 0;
-            try
-            {
-                if (collection is System.Collections.ICollection iCol) return iCol.Count;
-                PropertyInfo? countProp = collection.GetType().GetProperty("Count");
-                return countProp == null ? 0 : Convert.ToInt32(countProp.GetValue(collection, null));
-            }
-            catch
+            if (collection == null)
             {
                 return 0;
             }
+
+            if (collection is ICollection nonGenericCollection)
+            {
+                return nonGenericCollection.Count;
+            }
+
+            object? count = ReadMember(FindMember(collection.GetType(), "Count", false), collection);
+            return count == null ? 0 : Convert.ToInt32(count);
+        }
+
+        private static MemberInfo? FindMember(Type type, string name, bool isStatic)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return null;
+            }
+
+            string cacheKey = (isStatic ? "S" : "I") + "\0" +
+                              (type.AssemblyQualifiedName ?? type.FullName ?? type.Name) + "\0" + name;
+            lock (CacheLock)
+            {
+                if (MemberCache.TryGetValue(cacheKey, out MemberInfo cachedMember))
+                {
+                    return cachedMember;
+                }
+            }
+
+            BindingFlags flags = isStatic ? StaticFlags : InstanceFlags;
+            MemberInfo? member = null;
+            for (Type? current = type; current != null && member == null; current = current.BaseType)
+            {
+                member = current.GetField(name, flags) as MemberInfo ?? current.GetProperty(name, flags);
+            }
+
+            if (member != null)
+            {
+                lock (CacheLock)
+                {
+                    MemberCache[cacheKey] = member;
+                }
+            }
+
+            return member;
+        }
+
+        private static object? ReadMember(MemberInfo? member, object? target)
+        {
+            try
+            {
+                if (member is FieldInfo field)
+                {
+                    return field.GetValue(target);
+                }
+
+                if (member is PropertyInfo property && property.GetGetMethod(true) != null)
+                {
+                    return property.GetValue(target, null);
+                }
+            }
+            catch
+            {
+                // Optional members are expected to vary between extension versions.
+            }
+
+            return null;
         }
     }
 }
-

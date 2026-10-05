@@ -46,21 +46,7 @@ namespace BBPC.Patches
             if (textTransform != null)
             {
                 TextMeshProUGUI? textComponent = textTransform.GetComponent<TextMeshProUGUI>();
-                if (textComponent != null)
-                {
-                    TextLocalizer? localizer = textTransform.gameObject.GetComponent<TextLocalizer>();
-                    if (localizer == null)
-                    {
-                        localizer = textTransform.gameObject.AddComponent<TextLocalizer>();
-                        localizer.key = "BBPC_EndingError_Text";
-                        localizer.RefreshLocalization();
-                    }
-                    else
-                    {
-                        localizer.key = "BBPC_EndingError_Text";
-                        localizer.RefreshLocalization();
-                    }
-                }
+                textComponent?.ApplyLocalization("BBPC_EndingError_Text", true);
             }
         }
 

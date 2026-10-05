@@ -24,24 +24,10 @@ namespace BBPC.Patches
 
                 if (targetText != null && !BBPCTemp.is_eng)
                 {
-                    ApplyLocalizer(targetText);
+                    targetText.ApplyLocalization(WinTextKey);
                 }
             }
         }
 
-        private static void ApplyLocalizer(TextMeshProUGUI textComponent)
-        {
-            TextLocalizer localizer = textComponent.GetComponent<TextLocalizer>();
-            if (localizer == null)
-            {
-                localizer = textComponent.gameObject.AddComponent<TextLocalizer>();
-            }
-
-            if (localizer.key != WinTextKey)
-            {
-                localizer.key = WinTextKey;
-                localizer.RefreshLocalization();
-            }
-        }
     }
 } 
