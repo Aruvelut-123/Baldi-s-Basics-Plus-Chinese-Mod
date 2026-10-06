@@ -55,6 +55,7 @@ namespace BBPC.API
         private const string RepoName = "Baldi-s-Basics-Plus-Chinese-Mod";
         private const string UpdateUrl = "https://gamebanana.com/mods/updates/610816";
         private const string RequiredAssetName = "BBPC.dll";
+        private const string PatcherAssetName = "BBPCUpdatePatcher.dll";
         private static readonly Uri ReleasesApiUrl =
             new Uri($"https://api.github.com/repos/{RepoOwner}/{RepoName}/releases/latest");
         private static readonly HttpClient HttpClient = CreateHttpClient();
@@ -370,8 +371,7 @@ namespace BBPC.API
 
             if (releaseJson["assets"] is JArray assets)
             {
-                JObject? asset = assets.OfType<JObject>().FirstOrDefault(item =>
-                    string.Equals(item.Value<string>("name"), RequiredAssetName, StringComparison.OrdinalIgnoreCase));
+                JObject? asset = assets.OfType<JObject>().FirstOrDefault(IsCoreUpdateAsset);
                 string? browserUrl = asset?.Value<string>("browser_download_url");
                 if (asset != null && Uri.TryCreate(browserUrl, UriKind.Absolute, out Uri parsedUrl))
                 {
@@ -383,6 +383,14 @@ namespace BBPC.API
             }
 
             return new UpdateReleaseInfo(tagName, body, pageUrl, assetName, assetUrl, assetDigest, assetSize);
+        }
+
+        private static bool IsCoreUpdateAsset(JObject asset)
+        {
+            string? name = asset.Value<string>("name")?.Trim();
+            // The updater replaces only the loaded plugin. The preloader patcher is shipped separately.
+            return string.Equals(name, RequiredAssetName, StringComparison.OrdinalIgnoreCase) &&
+                   !string.Equals(name, PatcherAssetName, StringComparison.OrdinalIgnoreCase);
         }
 
         private static DigestVerificationResult VerifyDigest(string path, string? digest)
