@@ -46,13 +46,12 @@ namespace BBPC
     [BepInDependency("rost.moment.baldiplus.funsettings", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("wazkitta.plusmod.microeventsplus", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("levs_kittne.baldiplus.null", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInProcess("BALDI.exe")]
     public class Plugin : BaseUnityPlugin
     {
         public static Plugin Instance { get; private set; } = null!;
         public static Dictionary<string, AudioClip> AllClips { get; private set; } = new Dictionary<string, AudioClip>();
         private Harmony? harmonyInstance;
-        private string[] expectedGameVersions = ["0.14.3", "0.14.4", "0.14.5", "0.14.6"];
+        private string[] expectedGameVersions = ["0.14.3", "0.14.4", "0.14.5", "0.14.6", "0.14.7"];
 
         private static readonly string[] menuTextureNames =
         {
